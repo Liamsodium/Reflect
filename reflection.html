@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Reflect" />
+  <title>Reflect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060b14; --card: #0d1624; --border: #1e293b;
+      --text: #e2e2e8; --muted: #475569; --dim: #2d3f55;
+      --accent: #6366f1; --accentL: #a5b4fc;
+      --green: #22c55e; --yellow: #eab308; --red: #ef4444;
+      --orange: #f97316; --label: #8b9fc7;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { overflow-x: hidden; }
+    @keyframes up { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+    .anim { animation: up 0.3s ease; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Header */
+    #header { padding: 20px 20px 0; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .app-title { font-size: 20px; font-weight: 300; letter-spacing: 0.18em; font-family: 'DM Mono', monospace; color: #f1f5f0; }
+    .app-sub { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-top: 3px; }
+    .header-right { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+    .header-right .due { color: var(--red); margin-top: 3px; }
+    .header-right .ok { color: var(--dim); margin-top: 3px; }
+
+    /* Tabs */
+    .tabs { display: flex; margin-top: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn { flex-shrink: 0; padding: 10px 13px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; transition: all 0.15s; white-space: nowrap; }
+    .tab-btn.active { border-bottom-color: var(--accent); color: var(--accentL); }
+
+    /* Body */
+    #body { padding: 20px; max-width: 640px; margin: 0 auto; padding-bottom: 40px; }
+
+    /* Card */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+
+    /* Label */
+    .lbl { display: block; font-size: 11px; color: var(--label); letter-spacing: 0.13em; font-family: 'DM Mono', monospace; margin-bottom: 12px; text-transform: uppercase; }
+
+    /* Slider */
+    .slider-row { margin-bottom: 14px; }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .slider-name { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .slider-val { font-size: 18px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .slider-bars { display: flex; gap: 4px; }
+    .bar-seg { flex: 1; height: 7px; border-radius: 4px; border: none; cursor: pointer; transition: all 0.12s; background: var(--border); }
+    .bar-seg.active { transform: scaleY(1.7); }
+
+    /* Toggle */
+    .toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toggle-btn { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Sarabun', sans-serif; }
+    .toggle-btn.on { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+
+    /* Prompt */
+    .prompt-text { font-size: 15px; color: #94a3b8; line-height: 1.65; margin-bottom: 10px; font-weight: 300; }
+
+    /* Textarea */
+    textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 11px 12px; resize: vertical; min-height: 76px; font-family: 'Sarabun', sans-serif; line-height: 1.65; outline: none; }
+    textarea:focus { border-color: var(--accent); }
+    textarea.short { min-height: 58px; }
+
+    /* Buttons */
+    .btn-primary { width: 100%; padding: 13px 0; border-radius: 10px; border: none; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .btn-secondary { width: 100%; padding: 13px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .btn-small { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+    .btn-small.accent { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+    .btn-small.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); color: var(--red); }
+    .btn-copy { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+    .btn-copy.copied { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); color: var(--green); }
+
+    /* Period buttons */
+    .period-btn { flex: 1; padding: 9px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 12px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+    .period-btn.active { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+    .week-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; }
+    .week-btn.active { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+
+    /* Post-submit */
+    .submit-icon { text-align: center; padding: 24px 0 28px; }
+    .submit-icon .star { font-size: 30px; margin-bottom: 8px; }
+    .submit-icon p { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 0.1em; }
+    .md-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.7; white-space: pre-wrap; max-height: 260px; overflow-y: auto; }
+
+    /* Chart */
+    .bar-chart { display: flex; gap: 3px; align-items: flex-end; height: 68px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .bar-fill { width: 100%; border-radius: 3px 3px 0 0; opacity: 0.8; }
+    .bar-label { font-size: 8px; color: var(--dim); font-family: 'DM Mono', monospace; }
+    .chart-sub { font-size: 10px; color: var(--dim); margin-top: 8px; font-family: 'DM Mono', monospace; }
+
+    /* Tracker boxes */
+    .tracker-boxes { display: flex; gap: 8px; }
+    .tracker-box { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 6px; text-align: center; }
+    .tracker-box .icon { font-size: 22px; }
+    .tracker-box .num { font-size: 18px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .tracker-box .name { font-size: 10px; color: var(--dim); margin-top: 2px; }
+
+    /* Monthly avg */
+    .month-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .month-key { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; min-width: 60px; }
+    .month-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+    .month-bar-fill { height: 100%; border-radius: 3px; }
+    .month-val { font-size: 11px; font-family: 'DM Mono', monospace; min-width: 30px; }
+
+    /* History */
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+    details > summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    .entry-date { font-size: 13px; color: #94a3b8; font-family: 'DM Mono', monospace; }
+    .entry-scores { display: flex; gap: 8px; margin-top: 4px; }
+    .entry-score { font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; }
+    .entry-overall { font-size: 20px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .entry-overall span { font-size: 11px; color: var(--dim); }
+    .entry-body { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .entry-q { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .entry-a { font-size: 13px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px; }
+    .entry-section { border-top: 1px solid var(--border); padding-top: 10px; margin-bottom: 10px; }
+    .entry-section-label { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+
+    /* Stats boxes */
+    .stat-boxes { display: flex; gap: 8px; }
+    .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 6px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 700; color: var(--accentL); font-family: 'DM Mono', monospace; }
+    .stat-label { font-size: 10px; color: var(--dim); margin-top: 3px; }
+
+    /* AI result */
+    .ai-result { font-size: 14px; color: #94a3b8; line-height: 1.8; white-space: pre-wrap; }
+
+    /* Today notice */
+    .today-notice { font-size: 13px; color: var(--accentL); margin: 0; }
+
+    /* Settings info */
+    .settings-text { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+    .settings-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .q-item { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+    .q-num { color: var(--dim); font-family: 'DM Mono', monospace; }
+    .settings-note { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-top: 8px; }
+
+    /* Loading */
+    #loading { display: flex; align-items: center; justify-content: center; height: 100vh; font-family: 'DM Mono', monospace; color: var(--dim); font-size: 13px; }
+
+    /* Utility */
+    .hidden { display: none !important; }
+    .flex-row { display: flex; gap: 8px; }
+    .flex-wrap { flex-wrap: wrap; }
+    .mt-10 { margin-top: 10px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-14 { margin-top: 14px; }
+    .mb-14 { margin-bottom: 14px; }
+    .mb-0 { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+
+<div id="loading">loading...</div>
+
+<div id="app" class="hidden">
+  <div id="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">reflect.</div>
+        <div class="app-sub">v3 · daily journal</div>
+      </div>
+      <div class="header-right">
+        <div id="entry-count">◈ 0 entries</div>
+        <div id="days-since" class="ok"></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="write">✍ เขียน</button>
+      <button class="tab-btn" data-tab="chart">📊 กราฟ</button>
+      <button class="tab-btn" data-tab="history">◷ ย้อนหลัง</button>
+      <button class="tab-btn" data-tab="summary">✦ สรุป AI</button>
+      <button class="tab-btn" data-tab="settings">⚙ ตั้งค่า</button>
+    </div>
+  </div>
+
+  <div id="body">
+
+    <!-- WRITE TAB -->
+    <div id="tab-write" class="anim">
+
+      <div id="today-notice-card" class="card hidden">
+        <p class="today-notice">✓ คุณเขียนวันนี้แล้ว — แก้ไขได้เลย</p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">คะแนนวันนี้</span>
+        <div id="slider-overall"></div>
+        <div id="slider-energy"></div>
+        <div id="slider-mood"></div>
+        <div id="slider-focus"></div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">วันนี้</span>
+        <div class="toggles">
+          <button class="toggle-btn" id="tog-sleep" onclick="toggleTracker('sleep')">😴 นอนพอ</button>
+          <button class="toggle-btn" id="tog-exercise" onclick="toggleTracker('exercise')">🏃 ออกกำลังกาย</button>
+          <button class="toggle-btn" id="tog-social" onclick="toggleTracker('social')">👥 เจอคน</button>
+        </div>
+      </div>
+
+      <div id="questions-area"></div>
+
+      <div class="card">
+        <span class="lbl">บันทึกเพิ่มเติม (ไม่บังคับ)</span>
+        <textarea id="notes-input" class="short" placeholder="อะไรก็ได้ที่อยากเขียน..."></textarea>
+      </div>
+
+      <div class="card">
+        <span class="lbl">Intention — อยากทำหรือเป็นอะไรในวันนี้หรือพรุ่งนี้</span>
+        <textarea id="intention-input" class="short" placeholder="หนึ่งประโยค..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="handleSubmit()">บันทึก →</button>
+    </div>
+
+    <!-- POST SUBMIT -->
+    <div id="tab-submitted" class="anim hidden">
+      <div class="submit-icon">
+        <div class="star">✦</div>
+        <p>บันทึกแล้ว</p>
+      </div>
+      <div class="card">
+        <span class="lbl">Markdown สำหรับ Obsidian</span>
+        <div class="md-box" id="md-output"></div>
+        <div class="mt-10">
+          <button class="btn-copy" id="copy-md-btn" onclick="copyMD()">⎘ copy markdown</button>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="showWrite()">← กลับ</button>
+    </div>
+
+    <!-- CHART TAB -->
+    <div id="tab-chart" class="anim hidden">
+      <div class="card">
+        <span class="lbl">Overall Score — 14 วันล่าสุด</span>
+        <div id="mini-bar-chart"></div>
+      </div>
+      <div class="card">
+        <span class="lbl">Tracker สัปดาห์นี้</span>
+        <div id="tracker-week"></div>
+      </div>
+      <div class="card" id="monthly-avg-card">
+        <span class="lbl">Overall เฉลี่ยรายเดือน</span>
+        <div id="monthly-avg"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="anim hidden">
+      <span class="lbl" id="history-count">0 entries</span>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- SUMMARY TAB -->
+    <div id="tab-summary" class="anim hidden">
+      <div class="card">
+        <span class="lbl">เลือกช่วงเวลา</span>
+        <div class="flex-row mb-14">
+          <button class="period-btn active" id="period-week" onclick="setPeriod('week')">สัปดาห์</button>
+          <button class="period-btn" id="period-month" onclick="setPeriod('month')">เดือน</button>
+        </div>
+        <div id="week-selector" class="flex-row flex-wrap mb-14"></div>
+        <div id="month-selector" class="flex-row flex-wrap mb-14 hidden"></div>
+        <button class="btn-primary mb-0" id="ai-btn" onclick="runAI()">วิเคราะห์ด้วย AI →</button>
+      </div>
+      <div class="card hidden" id="ai-result-card">
+        <span class="lbl">ผลการวิเคราะห์</span>
+        <div class="ai-result" id="ai-result-text"></div>
+        <div class="mt-12">
+          <button class="btn-copy" id="copy-ai-btn" onclick="copyAI()">⎘ copy สำหรับ obsidian</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="tab-settings" class="anim hidden">
+      <div class="card">
+        <span class="lbl">Backup & Restore</span>
+        <p class="settings-text">ก่อนอัปเดตเวอร์ชันใหม่ export ก่อนเสมอ แล้ว import กลับเข้ามาได้เลย</p>
+        <div class="settings-row">
+          <button class="btn-small accent" onclick="handleExport()">↓ export .json</button>
+          <label class="btn-small" style="cursor:pointer">
+            ↑ import .json
+            <input type="file" accept=".json" style="display:none" onchange="handleImport(event)" />
+          </label>
+        </div>
+      </div>
+      <div class="card">
+        <span class="lbl">สถิติ</span>
+        <div class="stat-boxes" id="stats-boxes"></div>
+      </div>
+      <div class="card">
+        <span class="lbl">คำถามวันนี้</span>
+        <div id="settings-questions"></div>
+        <p class="settings-note" id="settings-note"></p>
+      </div>
+      <div class="card">
+        <span class="lbl">ลบข้อมูลทั้งหมด</span>
+        <button class="btn-small danger" onclick="handleDeleteAll()">ลบทั้งหมด</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const STORAGE_KEY = 'reflect_v3';
+
+const PROMPTS = [
+  'วันนี้ฉันรู้สึกอย่างไร และอะไรทำให้รู้สึกแบบนั้น?',
+  'สิ่งที่ฉันภูมิใจในตัวเองวันนี้คืออะไร แม้เพียงเล็กน้อย?',
+  'สิ่งที่ท้าทายฉันมากที่สุดตอนนี้ และฉันรับมือมันอย่างไร?',
+  'ถ้าฉันบอกอะไรกับตัวเองในอดีตได้ ฉันจะบอกว่าอะไร?',
+  'อะไรให้พลังงานฉัน และอะไรดูดพลังงานฉันไปในช่วงนี้?',
+  'ฉันกำลังหลีกเลี่ยงสิ่งใดอยู่ และทำไมถึงเป็นแบบนั้น?',
+  'เป้าหมายที่สำคัญที่สุดของฉันตอนนี้คืออะไร? วันนี้ได้เข้าใกล้มันบ้างไหม?',
+  'ฉันดูแลตัวเองดีพอไหมในช่วงนี้? มีอะไรที่ต้องการมากกว่านี้ไหม?',
+  'มีสิ่งไหนที่ฉันอยากปล่อยวาง แต่ยังทำไม่ได้?',
+  'ฉันกำลังเรียนรู้อะไรเกี่ยวกับตัวเองในช่วงเวลานี้?',
+  'ความสัมพันธ์ไหนที่ฉันอยากลงทุนเวลาและพลังงานมากขึ้น?',
+  'ถ้าความกลัวไม่มีอยู่ ฉันจะทำอะไรแตกต่างออกไป?',
+  'อะไรทำให้ฉันรู้สึกมีชีวิตชีวาและมีความหมายมากที่สุด?',
+  "ฉันนิยาม 'ความสำเร็จ' อย่างไรในช่วงชีวิตนี้?",
+  'มีเสียงในหัวที่พูดกับฉันในแง่ลบซ้ำๆ ไหม? มันพูดว่าอะไร?',
+  'ฉันรู้สึกอย่างไรกับร่างกายและสุขภาพของตัวเองตอนนี้?',
+  'วันนี้มีอะไรที่ฉันรู้สึกขอบคุณ แม้เป็นเรื่องเล็กน้อย?',
+  'ถ้าชีวิต 1 ปีจากนี้ดีขึ้นมาก มันจะเป็นอย่างไร?',
+  'ฉันรู้สึกเชื่อมต่อกับคนรอบข้างไหม หรือรู้สึกโดดเดี่ยว?',
+  'อะไรที่ฉันอยากทำแต่ยังไม่ได้ลงมือ และอะไรขัดขวางอยู่?',
+  'ตอนนี้อะไรกำลังดูดพลังงานฉันออกไป?',
+  'ฉันอยากรู้สึกอย่างไรในสัปดาห์นี้ และจะทำอะไรให้ได้รู้สึกแบบนั้น?',
+  'ฉันได้เรียนรู้อะไรในช่วงนี้ ทั้งเรื่องตัวเองและโลกรอบข้าง?',
+  'มีสิ่งใหม่อะไรที่ฉันอยากลองทำแต่ยังลังเลอยู่?',
+  'วันนี้มีสามสิ่งที่ฉันรู้สึกขอบคุณ คืออะไรบ้าง?',
+  'มีสามคนที่ฉันรู้สึกขอบคุณในชีวิตตอนนี้ คือใคร และทำไม?',
+  'ค่านิยมและสิ่งที่ยอมไม่ได้ (non-negotiables) ของฉันตอนนี้คืออะไร?',
+  'วันนี้ฉันได้เป็นตัวเองอย่างแท้จริงในช่วงไหนบ้าง?',
+  'ฉันจะแสดงออกถึงตัวตนที่แท้จริงของตัวเองได้มากขึ้นอย่างไร?',
+  'ตอนนี้คนสำคัญในชีวิตฉันมีใครบ้าง และฉันดูแลความสัมพันธ์เหล่านั้นดีพอไหม?',
+  'สิ่งที่ฉันทำและคนรอบข้างสะท้อนค่านิยมของฉันได้จริงไหม?',
+  'วันในฝันของฉันเป็นอย่างไร และวันนี้ฉันนำส่วนหนึ่งของมันมาใช้ได้บ้างไหม?',
+  'ถ้าจะบรรยายตัวเองในแบบที่ดีที่สุด—ชีวิต, routine, คนรอบข้าง, งาน—ต้องเปลี่ยนอะไรบ้าง?',
+  'วันนี้มีอะไรที่ฉันอยากฉลองให้ตัวเอง แม้เป็นเรื่องเล็กๆ?',
+  "สัปดาห์นี้ฉัน 'in' กับอะไร และ 'out' จากอะไร?",
+  'มี intention หนึ่งข้อที่ฉันอยากโฟกัสในปีนี้ และวันนี้ได้ทำตามมันบ้างไหม?',
+  'อะไรทำให้ฉันกลัวหรือกังวล สิ่งนั้นอยู่ในการควบคุมของฉันไหม และถ้าใช่จะรับมืออย่างไร?',
+  'เป้าหมายหลัก 3 ข้อของฉันในช่วงนี้คืออะไร และสำคัญกับฉันเพราะอะไร?',
+  'ตอนนี้ฉันรู้ตัวว่ากำลังหลีกเลี่ยงอะไรอยู่?',
+  'ฉันจะทำอะไรให้ inner child ของตัวเองบ้าง และจะหาเวลาสำหรับมันได้เมื่อไหร่?',
+];
+
+// ── State ──
+let entries = [];
+let sliders = {
+  overall: { val: 5, max: 10, label: 'Overall (ทำได้ตามที่คาดหวังไหม)' },
+  energy:  { val: 3, max: 5,  label: 'พลังงาน' },
+  mood:    { val: 3, max: 5,  label: 'อารมณ์' },
+  focus:   { val: 3, max: 5,  label: 'โฟกัส' },
+};
+let tracker = { sleep: false, exercise: false, social: false };
+let answers = ['', '', ''];
+let currentTab = 'write';
+let activePeriod = 'week';
+let selWeek = 0;
+let selMonth = '';
+let lastMD = '';
+let lastAI = '';
+
+// ── Helpers ──
+function pickThree(seed) {
+  const idx = [];
+  let s = seed;
+  while (idx.length < 3) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const i = Math.abs(s) % PROMPTS.length;
+    if (!idx.includes(i)) idx.push(i);
+  }
+  return idx.map(i => ({ index: i, text: PROMPTS[i] }));
+}
+function todayKey() { return new Date().toISOString().split('T')[0]; }
+function dayIndex(d) { return Math.floor(new Date(d).getTime() / 86400000); }
+function promptsForDay(d) { return pickThree(dayIndex(d) * 7919 + 12345); }
+function fmtShort(d) {
+  const dt = new Date(d);
+  const m = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][dt.getMonth()];
+  return dt.getDate() + ' ' + m;
+}
+function fmtFull(d) {
+  const dt = new Date(d);
+  const m = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][dt.getMonth()];
+  return dt.getDate() + ' ' + m + ' ' + (dt.getFullYear() + 543);
+}
+function getWeekEntries(weeksAgo) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay() - weeksAgo * 7);
+  start.setHours(0,0,0,0);
+  const end = new Date(start); end.setDate(start.getDate() + 7);
+  return entries.filter(e => { const d = new Date(e.date); return d >= start && d < end; });
+}
+function scoreColor(v, max) {
+  const ratio = v / max;
+  if (ratio >= 0.7) return '#22c55e';
+  if (ratio >= 0.5) return '#eab308';
+  return '#ef4444';
+}
+function barColors5(v) {
+  return ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'][v - 1];
+}
+function generateMD(e) {
+  return `# Journal — ${fmtFull(e.date)}
+tags: #journal #mental-daily
+
+## คะแนนวันนี้
+- Overall: ${e.overall}/10
+- พลังงาน: ${e.energy}/5
+- อารมณ์: ${e.mood}/5
+- โฟกัส: ${e.focus}/5
+
+## Tracker
+- ${e.tracker?.sleep ? '✓' : '✗'} นอนพอ
+- ${e.tracker?.exercise ? '✓' : '✗'} ออกกำลังกาย
+- ${e.tracker?.social ? '✓' : '✗'} เจอคน
+
+## คำถาม 1: ${e.prompts?.[0]?.text}
+${e.answers?.[0] || '—'}
+
+## คำถาม 2: ${e.prompts?.[1]?.text}
+${e.answers?.[1] || '—'}
+
+## คำถาม 3: ${e.prompts?.[2]?.text}
+${e.answers?.[2] || '—'}
+
+## บันทึกเพิ่มเติม
+${e.notes || '—'}
+
+## Intention
+${e.intention || '—'}`;
+}
+
+// ── Storage ──
+function loadEntries() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) entries = JSON.parse(r); } catch {}
+}
+function saveEntries() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch {}
+}
+
+// ── Sliders ──
+function renderSlider(key) {
+  const s = sliders[key];
+  const c = key === 'overall' ? scoreColor(s.val, 10) : barColors5(s.val);
+  const steps = Array.from({length: s.max}, (_, i) => i + 1);
+  let html = `<div class="slider-row"><div class="slider-header"><span class="slider-name">${s.label}</span><span class="slider-val" id="sv-${key}" style="color:${c}">${s.val}</span></div><div class="slider-bars">`;
+  steps.forEach(v => {
+    const active = v <= s.val ? 'active' : '';
+    const bg = v <= s.val ? c : 'var(--border)';
+    html += `<button class="bar-seg ${active}" style="background:${bg}" onclick="setSlider('${key}',${v})"></button>`;
+  });
+  html += '</div></div>';
+  document.getElementById('slider-' + key).innerHTML = html;
+}
+function setSlider(key, val) {
+  sliders[key].val = val;
+  renderSlider(key);
+}
+function renderAllSliders() {
+  Object.keys(sliders).forEach(renderSlider);
+}
+
+// ── Tracker ──
+function toggleTracker(key) {
+  tracker[key] = !tracker[key];
+  const btn = document.getElementById('tog-' + key);
+  btn.classList.toggle('on', tracker[key]);
+}
+
+// ── Questions ──
+function renderQuestions() {
+  const today = todayKey();
+  const prompts = promptsForDay(today);
+  let html = '';
+  prompts.forEach((p, i) => {
+    html += `<div class="card">
+      <span class="lbl">คำถาม ${i+1} / 3</span>
+      <p class="prompt-text">${p.text}</p>
+      <textarea id="ans-${i}" placeholder="เขียนได้เลย..." oninput="answers[${i}]=this.value">${answers[i]}</textarea>
+    </div>`;
+  });
+  document.getElementById('questions-area').innerHTML = html;
+  return prompts;
+}
+
+// ── Submit ──
+function handleSubmit() {
+  const today = todayKey();
+  const prompts = promptsForDay(today);
+  const entry = {
+    date: today,
+    overall: sliders.overall.val,
+    energy: sliders.energy.val,
+    mood: sliders.mood.val,
+    focus: sliders.focus.val,
+    tracker: {...tracker},
+    prompts,
+    answers: [...answers],
+    notes: document.getElementById('notes-input').value,
+    intention: document.getElementById('intention-input').value,
+  };
+  entries = entries.filter(e => e.date !== today);
+  entries.push(entry);
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  saveEntries();
+  lastMD = generateMD(entry);
+  document.getElementById('md-output').textContent = lastMD;
+  document.getElementById('tab-write').classList.add('hidden');
+  document.getElementById('tab-submitted').classList.remove('hidden');
+  updateHeader();
+}
+
+function showWrite() {
+  document.getElementById('tab-submitted').classList.add('hidden');
+  document.getElementById('tab-write').classList.remove('hidden');
+  resetWriteForm();
+}
+
+function resetWriteForm() {
+  answers = ['','',''];
+  tracker = {sleep:false,exercise:false,social:false};
+  ['sleep','exercise','social'].forEach(k => document.getElementById('tog-'+k).classList.remove('on'));
+  sliders = {
+    overall: { val: 5, max: 10, label: 'Overall (ทำได้ตามที่คาดหวังไหม)' },
+    energy:  { val: 3, max: 5,  label: 'พลังงาน' },
+    mood:    { val: 3, max: 5,  label: 'อารมณ์' },
+    focus:   { val: 3, max: 5,  label: 'โฟกัส' },
+  };
+  renderAllSliders();
+  renderQuestions();
+  document.getElementById('notes-input').value = '';
+  document.getElementById('intention-input').value = '';
+}
+
+// ── Copy ──
+function copyMD() {
+  navigator.clipboard.writeText(lastMD);
+  const btn = document.getElementById('copy-md-btn');
+  btn.textContent = '✓ copied'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '⎘ copy markdown'; btn.classList.remove('copied'); }, 2000);
+}
+function copyAI() {
+  navigator.clipboard.writeText(lastAI);
+  const btn = document.getElementById('copy-ai-btn');
+  btn.textContent = '✓ copied'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '⎘ copy สำหรับ obsidian'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ── Header ──
+function updateHeader() {
+  document.getElementById('entry-count').textContent = '◈ ' + entries.length + ' entries';
+  if (entries.length) {
+    const last = entries[entries.length-1];
+    const days = Math.floor((Date.now() - new Date(last.date).getTime()) / 86400000);
+    const el = document.getElementById('days-since');
+    if (days === 0) { el.textContent = '✓ เขียนแล้ววันนี้'; el.className = 'ok'; }
+    else { el.textContent = days + 'วัน ที่แล้ว'; el.className = days >= 2 ? 'due' : 'ok'; }
+  }
+  const today = todayKey();
+  const todayEntry = entries.find(e => e.date === today);
+  document.getElementById('today-notice-card').classList.toggle('hidden', !todayEntry);
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const ids = ['write','chart','history','summary','settings'];
+  ids.forEach(id => {
+    const el = document.getElementById('tab-' + id);
+    if (el) el.classList.toggle('hidden', id !== tab);
+  });
+  document.getElementById('tab-submitted').classList.add('hidden');
+  if (tab === 'chart') renderChart();
+  if (tab === 'history') renderHistory();
+  if (tab === 'summary') renderSummary();
+  if (tab === 'settings') renderSettings();
+}
+
+// ── Chart ──
+function renderChart() {
+  // Mini bar
+  const data = entries.slice(-14);
+  let html = '';
+  if (!data.length) {
+    html = '<p style="color:var(--dim);font-size:13px">ยังไม่มีข้อมูล</p>';
+  } else {
+    html = '<div class="bar-chart">';
+    data.forEach(e => {
+      const v = e.overall ?? 5;
+      const h = Math.round((v / 10) * 52);
+      const c = scoreColor(v, 10);
+      html += `<div class="bar-wrap"><div class="bar-fill" style="height:${h}px;background:${c}"></div><span class="bar-label">${new Date(e.date).getDate()}</span></div>`;
+    });
+    html += '</div><p class="chart-sub">คะแนน overall 14 วันล่าสุด</p>';
+  }
+  document.getElementById('mini-bar-chart').innerHTML = html;
+
+  // Tracker week
+  const w = getWeekEntries(0);
+  let thtml = '';
+  if (!w.length) {
+    thtml = '<p style="color:var(--dim);font-size:13px">ยังไม่มีข้อมูลสัปดาห์นี้</p>';
+  } else {
+    const keys = [['sleep','😴','นอนพอ'],['exercise','🏃','ออกกำลัง'],['social','👥','เจอคน']];
+    thtml = '<div class="tracker-boxes">';
+    keys.forEach(([k,ic,lb]) => {
+      const count = w.filter(e => e.tracker?.[k]).length;
+      const c = count === w.length ? 'var(--green)' : count > 0 ? 'var(--yellow)' : 'var(--muted)';
+      thtml += `<div class="tracker-box"><div class="icon">${ic}</div><div class="num" style="color:${c}">${count}/${w.length}</div><div class="name">${lb}</div></div>`;
+    });
+    thtml += '</div>';
+  }
+  document.getElementById('tracker-week').innerHTML = thtml;
+
+  // Monthly avg
+  const months = getMonths();
+  const keys = Object.keys(months).sort().reverse().slice(0, 6);
+  if (!keys.length) { document.getElementById('monthly-avg-card').classList.add('hidden'); return; }
+  document.getElementById('monthly-avg-card').classList.remove('hidden');
+  let mhtml = '';
+  keys.forEach(m => {
+    const es = months[m];
+    const avg = es.reduce((s,e) => s+(e.overall??5),0) / es.length;
+    const c = avg >= 7 ? 'var(--green)' : avg >= 5 ? 'var(--yellow)' : 'var(--red)';
+    mhtml += `<div class="month-row"><span class="month-key">${m}</span><div class="month-bar-bg"><div class="month-bar-fill" style="width:${(avg/10)*100}%;background:${c}"></div></div><span class="month-val" style="color:${c}">${avg.toFixed(1)}</span></div>`;
+  });
+  document.getElementById('monthly-avg').innerHTML = mhtml;
+}
+
+// ── History ──
+function renderHistory() {
+  document.getElementById('history-count').textContent = entries.length + ' entries';
+  if (!entries.length) {
+    document.getElementById('history-list').innerHTML = '<p style="color:var(--dim);text-align:center;padding:40px">ยังไม่มีข้อมูล</p>';
+    return;
+  }
+  let html = '';
+  [...entries].reverse().forEach((e, i) => {
+    const ov = e.overall ?? 5;
+    const c = scoreColor(ov, 10);
+    const md = generateMD(e);
+    const mdEsc = md.replace(/'/g, "\\'").replace(/\n/g, '\\n');
+    const trackerIcons = (e.tracker?.sleep?'😴':'')+(e.tracker?.exercise?'🏃':'')+(e.tracker?.social?'👥':'');
+    let qhtml = '';
+    if (e.prompts) {
+      e.prompts.forEach((p,pi) => {
+        qhtml += `<p class="entry-q">${p.text}</p><p class="entry-a">${e.answers?.[pi]||'—'}</p>`;
+      });
+    }
+    let extra = '';
+    if (e.notes) extra += `<div class="entry-section"><p class="entry-section-label">NOTES</p><p class="entry-a">${e.notes}</p></div>`;
+    if (e.intention) extra += `<div class="entry-section"><p class="entry-section-label">INTENTION</p><p class="entry-a" style="color:var(--accentL)">${e.intention}</p></div>`;
+    html += `<details>
+      <summary>
+        <div>
+          <div class="entry-date">${fmtShort(e.date)}</div>
+          <div class="entry-scores">
+            <span class="entry-score">⚡${e.energy}</span>
+            <span class="entry-score">♥${e.mood}</span>
+            <span class="entry-score">◈${e.focus}</span>
+            <span style="font-size:11px">${trackerIcons}</span>
+          </div>
+        </div>
+        <span class="entry-overall" style="color:${c}">${ov}<span>/10</span></span>
+      </summary>
+      <div class="entry-body">${qhtml}${extra}<div class="mt-12"><button class="btn-copy" onclick="copyEntryMD(this,'${mdEsc}')">⎘ copy markdown</button></div></div>
+    </details>`;
+  });
+  document.getElementById('history-list').innerHTML = html;
+}
+
+function copyEntryMD(btn, mdEsc) {
+  const md = mdEsc.replace(/\\n/g, '\n').replace(/\\'/g, "'");
+  navigator.clipboard.writeText(md);
+  btn.textContent = '✓ copied'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '⎘ copy markdown'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ── Summary ──
+function setPeriod(p) {
+  activePeriod = p;
+  document.getElementById('period-week').classList.toggle('active', p === 'week');
+  document.getElementById('period-month').classList.toggle('active', p === 'month');
+  document.getElementById('week-selector').classList.toggle('hidden', p !== 'week');
+  document.getElementById('month-selector').classList.toggle('hidden', p !== 'month');
+  document.getElementById('ai-result-card').classList.add('hidden');
+}
+
+function renderSummary() {
+  // Week buttons
+  let whtml = '';
+  for (let w = 0; w <= 3; w++) {
+    const n = getWeekEntries(w).length;
+    const lbl = w === 0 ? 'สัปดาห์นี้' : w+'wk ก่อน';
+    whtml += `<button class="week-btn${selWeek===w?' active':''}" onclick="selectWeek(${w})">${lbl} · ${n}</button>`;
+  }
+  document.getElementById('week-selector').innerHTML = whtml;
+
+  // Month buttons
+  const months = getMonths();
+  const mkeys = Object.keys(months).sort().reverse();
+  let mhtml = '';
+  mkeys.forEach(m => {
+    mhtml += `<button class="week-btn${selMonth===m?' active':''}" onclick="selectMonth('${m}')">${m} · ${months[m].length}</button>`;
+  });
+  document.getElementById('month-selector').innerHTML = mhtml || '<p style="color:var(--dim);font-size:13px">ยังไม่มีข้อมูล</p>';
+}
+
+function selectWeek(w) {
+  selWeek = w;
+  document.querySelectorAll('#week-selector .week-btn').forEach((b,i) => b.classList.toggle('active', i===w));
+  document.getElementById('ai-result-card').classList.add('hidden');
+}
+function selectMonth(m) {
+  selMonth = m;
+  document.querySelectorAll('#month-selector .week-btn').forEach(b => b.classList.toggle('active', b.textContent.startsWith(m)));
+  document.getElementById('ai-result-card').classList.add('hidden');
+}
+
+async function runAI() {
+  let target = [];
+  if (activePeriod === 'week') target = getWeekEntries(selWeek);
+  else target = entries.filter(e => e.date.startsWith(selMonth));
+  if (!target.length) { alert('ไม่มีข้อมูลในช่วงที่เลือก'); return; }
+  const btn = document.getElementById('ai-btn');
+  btn.textContent = 'กำลังวิเคราะห์...'; btn.disabled = true;
+  document.getElementById('ai-result-card').classList.add('hidden');
+  const content = target.map(generateMD).join('\n\n---\n\n');
+  const label = activePeriod === 'week' ? (selWeek===0?'สัปดาห์นี้':selWeek+'สัปดาห์ก่อน') : 'เดือน '+selMonth;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20251201',
+        max_tokens: 1000,
+        system: 'คุณเป็น personal journal analyst ที่ใส่ใจและเข้าใจมนุษย์ ตอบเป็นภาษาไทย ใช้ Markdown',
+        messages: [{role:'user',content:`Journal ของฉัน${label}:\n\n${content}\n\nวิเคราะห์:\n1. **ภาพรวม** – คะแนน overall และ trend\n2. **Themes** – เรื่องที่ปรากฏบ่อย\n3. **ด้านดี** – สิ่งน่าชื่นชม\n4. **จุดที่ควรใส่ใจ** – pattern ที่ต้องดูแล\n5. **ข้อความถึงตัวเอง** – ประโยคสั้นๆ\n\nเขียนให้อบอุ่น ตรงไปตรงมา และเป็นกำลังใจ`}]
+      })
+    });
+    const json = await res.json();
+    lastAI = json.content?.map(b=>b.text||'').join('') || 'เกิดข้อผิดพลาด';
+  } catch { lastAI = 'เกิดข้อผิดพลาด ลองใหม่'; }
+  document.getElementById('ai-result-text').textContent = lastAI;
+  document.getElementById('ai-result-card').classList.remove('hidden');
+  btn.textContent = 'วิเคราะห์ด้วย AI →'; btn.disabled = false;
+}
+
+// ── Settings ──
+function renderSettings() {
+  // Stats
+  const avg = entries.length ? (entries.reduce((s,e)=>s+(e.overall??5),0)/entries.length).toFixed(1) : '–';
+  const months = getMonths();
+  document.getElementById('stats-boxes').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${entries.length}</div><div class="stat-label">Entries</div></div>
+    <div class="stat-box"><div class="stat-val">${Object.keys(months).length}</div><div class="stat-label">เดือน</div></div>
+    <div class="stat-box"><div class="stat-val">${avg}</div><div class="stat-label">Avg overall</div></div>`;
+
+  // Questions
+  const today = todayKey();
+  const prompts = promptsForDay(today);
+  let qhtml = '';
+  prompts.forEach((p,i) => {
+    qhtml += `<p class="q-item"><span class="q-num">${i+1}. </span>${p.text}</p>`;
+  });
+  document.getElementById('settings-questions').innerHTML = qhtml;
+  const w = getWeekEntries(0).length;
+  document.getElementById('settings-note').textContent = `คำถามเปลี่ยนทุกวัน · สัปดาห์นี้มี ${w} entries`;
+}
+
+// ── Export/Import ──
+function handleExport() {
+  const data = JSON.stringify({version:3, entries}, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reflect-backup-' + todayKey() + '.json';
+  a.click();
+}
+function handleImport(evt) {
+  const file = evt.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = data.entries || [];
+      const merged = [...entries];
+      imported.forEach(ie => { if (!merged.find(ex => ex.date === ie.date)) merged.push(ie); });
+      merged.sort((a,b) => a.date.localeCompare(b.date));
+      entries = merged; saveEntries(); updateHeader();
+      alert('นำเข้าสำเร็จ ' + imported.length + ' entries');
+      renderSettings();
+    } catch { alert('ไม่สามารถอ่านไฟล์ได้'); }
+  };
+  r.readAsText(file);
+}
+function handleDeleteAll() {
+  if (window.confirm('ลบทั้งหมด? แนะนำ export ก่อน')) {
+    entries = []; saveEntries(); updateHeader(); renderSettings();
+  }
+}
+
+// ── Months helper ──
+function getMonths() {
+  const m = {};
+  entries.forEach(e => {
+    const k = e.date.slice(0,7);
+    if (!m[k]) m[k] = [];
+    m[k].push(e);
+  });
+  return m;
+}
+
+// ── Init ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+loadEntries();
+renderAllSliders();
+renderQuestions();
+updateHeader();
+document.getElementById('loading').classList.add('hidden');
+document.getElementById('app').classList.remove('hidden');
+</script>
+</body>
+</html>
