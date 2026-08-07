@@ -335,6 +335,10 @@
 // ── Data ──
 const STORAGE_KEY = 'reflect_v3';
 
+// Vercel proxy endpoint — keeps the OpenRouter API key hidden server-side.
+// No API key lives in this file anymore.
+const AI_ENDPOINT = 'https://reflect-rouge-phi.vercel.app/api/summary';
+
 const PROMPTS = [
   'วันนี้ฉันรู้สึกอย่างไร และอะไรทำให้รู้สึกแบบนั้น?',
   'สิ่งที่ฉันภูมิใจในตัวเองวันนี้คืออะไร แม้เพียงเล็กน้อย?',
@@ -784,18 +788,16 @@ async function runAI() {
   const content = target.map(generateMD).join('\n\n---\n\n');
   const label = activePeriod === 'week' ? (selWeek===0?'สัปดาห์นี้':selWeek+'สัปดาห์ก่อน') : 'เดือน '+selMonth;
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // Calls our own Vercel function instead of OpenRouter directly.
+    // The OpenRouter key lives only in Vercel's environment variables now —
+    // this file no longer contains any secret.
+    const res = await fetch(AI_ENDPOINT, {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer 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'},
-      body: JSON.stringify({
-        model: 'google/gemini-flash-1.5',
-        max_tokens: 1000,
-        system: 'คุณเป็น personal journal analyst ที่ใส่ใจและเข้าใจมนุษย์ ตอบเป็นภาษาไทย ใช้ Markdown',
-        messages: [{role:'user',content:`Journal ของฉัน${label}:\n\n${content}\n\nวิเคราะห์:\n1. **ภาพรวม** – คะแนน overall และ trend\n2. **Themes** – เรื่องที่ปรากฏบ่อย\n3. **ด้านดี** – สิ่งน่าชื่นชม\n4. **จุดที่ควรใส่ใจ** – pattern ที่ต้องดูแล\n5. **ข้อความถึงตัวเอง** – ประโยคสั้นๆ\n\nเขียนให้อบอุ่น ตรงไปตรงมา และเป็นกำลังใจ`}]
-      })
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ content, label })
     });
     const json = await res.json();
-    lastAI = json.choices?.[0]?.message?.content || json.content?.map(b=>b.text||'').join('') || 'เกิดข้อผิดพลาด';
+    lastAI = json.result || json.error || 'เกิดข้อผิดพลาด';
   } catch { lastAI = 'เกิดข้อผิดพลาด ลองใหม่'; }
   document.getElementById('ai-result-text').textContent = lastAI;
   document.getElementById('ai-result-card').classList.remove('hidden');
