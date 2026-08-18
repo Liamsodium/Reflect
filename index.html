@@ -235,6 +235,14 @@
     </div>
 
     <div class="w-item">
+      <div class="w-icon">✎</div>
+      <div>
+        <div class="w-h">แก้ไขทีหลังได้เสมอ</div>
+        <div class="w-p">บันทึกแล้วไม่ได้แปลว่าจบ — กลับมาแก้หรือเขียนเพิ่มได้ทุกเมื่อที่แท็บ <strong style="color:var(--accentL)">◷ ย้อนหลัง</strong> และถ้าลืมเขียนวันไหน ก็ย้อนไปเขียนวันนั้นได้</div>
+      </div>
+    </div>
+
+    <div class="w-item">
       <div class="w-icon">🔒</div>
       <div>
         <div class="w-h">ข้อมูลอยู่ในเครื่องคุณเท่านั้น</div>
@@ -279,7 +287,7 @@
     <div class="header-top">
       <div>
         <div class="app-title">reflect.</div>
-        <div class="app-sub" id="version-line">v5.0 · daily journal</div>
+        <div class="app-sub" id="version-line">v · daily journal</div>
       </div>
       <div class="header-right">
         <div id="entry-count">◈ 0 entries</div>
@@ -302,7 +310,7 @@
 
       <div id="alert-card" class="card hidden" style="border-color:rgba(234,179,8,0.35);background:rgba(234,179,8,0.07)">
         <div style="font-size:13px;color:#fde68a;line-height:1.7" id="alert-text"></div>
-        <div class="mt-12"><button class="btn-small accent" onclick="switchTab('settings')">ไปหน้า export →</button></div>
+        <div class="mt-12"><button class="btn-small accent" id="alert-action">ไปหน้า export →</button></div>
       </div>
 
       <div id="throwback-card" class="card throwback hidden">
@@ -311,7 +319,7 @@
       </div>
 
       <div id="today-notice-card" class="card hidden">
-        <p class="today-notice">✓ คุณเขียนวันนี้แล้ว — แก้ไขได้เลย</p>
+        <p class="today-notice">✓ คุณเขียนของวันนี้แล้ว — ที่เห็นด้านล่างคือสิ่งที่บันทึกไว้ แก้ตรงนี้แล้วกดบันทึกซ้ำได้เลย หรือดูบันทึกเก่าวันอื่นที่แท็บ ◷ ย้อนหลัง</p>
       </div>
 
       <div class="card" id="date-card">
@@ -374,6 +382,11 @@
         <p>บันทึกแล้ว</p>
         <div class="sub" id="submit-streak"></div>
       </div>
+      <div class="card" style="border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)">
+        <p style="font-size:13px;color:var(--accentL);line-height:1.7;margin:0">
+          ✎ <strong>แก้ไขได้ทุกเมื่อ</strong> — บันทึกแล้วไม่ได้แปลว่าจบ ถ้าอยากกลับมาแก้หรือเขียนเพิ่ม ไปที่แท็บ <strong>◷ ย้อนหลัง</strong> แล้วกดปุ่มแก้ไขที่บันทึกนั้นได้เลย ไม่จำกัดเวลา
+        </p>
+      </div>
       <div class="card">
         <span class="lbl">Markdown สำหรับ Obsidian</span>
         <div class="md-box" id="md-output"></div>
@@ -413,6 +426,7 @@
     <!-- HISTORY -->
     <div id="tab-history" class="anim hidden">
       <input class="search-box" id="search-input" type="search" placeholder="ค้นหา… เช่น สอบ, ว่ายน้ำ, เหนื่อย" oninput="renderHistory()" />
+      <div style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:11px 13px;margin:0 0 14px;font-size:13px;color:#fde68a;line-height:1.6">✎ แตะที่บันทึกเพื่อเปิดอ่าน แล้วกด <strong>✎ แก้ไข</strong> เพื่อกลับไปแก้ได้ทุกเมื่อ ไม่จำกัดเวลา</div>
       <span class="lbl" id="history-count">0 entries</span>
       <div id="history-list"></div>
     </div>
@@ -460,8 +474,15 @@
         </div>
       </div>
 
+      <div class="card" id="review-card">
+        <span class="lbl">รีวิวจากผู้ใช้ (สาธารณะ)</span>
+        <p class="settings-text" id="review-text"></p>
+        <div class="settings-row" id="review-actions"></div>
+        <p class="settings-note" id="review-note"></p>
+      </div>
+
       <div class="card" id="feedback-card">
-        <span class="lbl">Feedback</span>
+        <span class="lbl">แจ้งปัญหา / ฟีดแบ็กถึงผู้พัฒนา</span>
         <p class="settings-text" id="feedback-text"></p>
         <div class="settings-row" id="feedback-actions"></div>
         <p class="settings-note" id="feedback-note"></p>
@@ -551,11 +572,13 @@
 //  STORAGE KEYS — เพิ่มใหม่ได้ แต่อย่าเปลี่ยนชื่อเดิม
 // ═══════════════════════════════════════════
 const K_ENTRIES = 'reflect_v3';        // คงชื่อเดิมไว้เพื่อความเข้ากันได้
-const K_DRAFT   = 'reflect_draft_v3';
+const K_DRAFT    = 'reflect_draft_v3';   // ชื่อเก่า — เก็บไว้เพื่อ migrate ข้อมูลที่อาจค้างอยู่
+const K_DRAFTS   = 'reflect_drafts_v1';  // ใหม่: เก็บร่างแยกตามวันที่ กันร่างวันอื่นถูกเขียนทับ
+const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '6.0';
+const APP_VERSION = '6.6';
 const BUILD_DATE  = '8 ส.ค. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -563,6 +586,15 @@ const BUILD_DATE  = '8 ส.ค. 69';
 // │  ถ้าเว้นว่างไว้ ปุ่มฟีดแบ็กจะยังไม่โชว์                    │
 // └──────────────────────────────────────────────────────────┘
 const FEEDBACK_URL = '';
+
+// ┌──────────────────────────────────────────────────────────┐
+// │  ลิงก์รีวิวสาธารณะ — คนละฟอร์มกับ FEEDBACK_URL ด้านบน       │
+// │  REVIEW_URL          = ลิงก์ "เขียนรีวิว" (ลงท้าย /viewform)   │
+// │  REVIEW_RESULTS_URL  = ลิงก์ "ดูรีวิวคนอื่น" (ลงท้าย /viewanalytics) │
+// │  ต้องเปิด "View results summary" ในฟอร์มนั้นไว้ก่อน           │
+// └──────────────────────────────────────────────────────────┘
+const REVIEW_URL = '';
+const REVIEW_RESULTS_URL = '';
 const SCHEMA      = 2;              // เลขโครงสร้างข้อมูล — เพิ่มขึ้นเมื่อเปลี่ยนรูปแบบ
 const EXPORT_REMIND_DAYS = 30;      // เตือน export ถ้าเกินกี่วัน
 const QUOTA_CHARS = 2600000;        // พื้นที่ประมาณ 5MB (นับเป็นตัวอักษร)
@@ -861,6 +893,14 @@ function openFeedback() {
   if (!FEEDBACK_URL) return;
   window.open(FEEDBACK_URL, '_blank', 'noopener');
 }
+function openReview() {
+  if (!REVIEW_URL) return;
+  window.open(REVIEW_URL, '_blank', 'noopener');
+}
+function openReviewResults() {
+  if (!REVIEW_RESULTS_URL) return;
+  window.open(REVIEW_RESULTS_URL, '_blank', 'noopener');
+}
 
 // ── Quick mode ──
 function setQuickMode(on) {
@@ -977,9 +1017,8 @@ function loadForDate(dateKey) {
     answers = saved.answers.slice(0,3);
     notes = saved.notes; intention = saved.intention;
   } else {
-    let d = null;
-    try { d = JSON.parse(localStorage.getItem(K_DRAFT) || 'null'); } catch (err) {}
-    if (d && d.date === dateKey) {
+    const d = getDraftFor(dateKey);
+    if (d) {
       if (d.overall) sliders.overall.val = d.overall;
       if (d.energy)  sliders.energy.val  = d.energy;
       if (d.mood)    sliders.mood.val    = d.mood;
@@ -1054,7 +1093,7 @@ function handleSubmit() {
   entries.push(entry);
   entries.sort((a,b) => a.date.localeCompare(b.date));
   saveEntries();
-  clearDraft();
+  clearDraft(target);
   lastMD = generateMD(entry);
   document.getElementById('md-output').textContent = lastMD;
   const st = calcStreak();
@@ -1095,7 +1134,17 @@ function copyPrompt() {
 function renderAlerts() {
   const card = document.getElementById('alert-card');
   const txt  = document.getElementById('alert-text');
+  const btn  = document.getElementById('alert-action');
   const msgs = [];
+  let action = { label: 'ไปหน้า export →', fn: function () { switchTab('settings'); } };
+
+  // ── สำคัญที่สุด: มีสิ่งที่เขียนค้างไว้วันอื่นที่ยังไม่ได้กดบันทึก ──
+  const orphanDate = findOrphanDraftDate();
+  if (orphanDate) {
+    msgs.push('✍️ <strong>มีสิ่งที่เขียนค้างไว้เมื่อ ' + fmtShort(orphanDate) + ' ยังไม่ได้กดบันทึก</strong><br>' +
+      'แตะปุ่มด้านล่างเพื่อไปเขียนต่อและกดบันทึกให้เรียบร้อย ก่อนที่จะลืมหรือสลับหน้าไปทำอย่างอื่น');
+    action = { label: '📝 ไปเขียนต่อ ' + fmtShort(orphanDate) + ' →', fn: function () { setActiveDate(orphanDate); } };
+  }
 
   const pct = storagePct();
   if (pct >= QUOTA_WARN) {
@@ -1113,6 +1162,7 @@ function renderAlerts() {
 
   if (!msgs.length) { card.classList.add('hidden'); return; }
   txt.innerHTML = msgs.join('<hr style="border:none;border-top:1px solid rgba(234,179,8,0.2);margin:12px 0">');
+  if (btn) { btn.textContent = action.label; btn.onclick = action.fn; }
   card.classList.remove('hidden');
 }
 
@@ -1458,13 +1508,15 @@ function renderSettings() {
 
   renderInstallStatus();
   renderFeedback();
+  renderReview();
 
   const vi = document.getElementById('version-info');
   if (vi) {
     vi.innerHTML =
       'เวอร์ชัน <strong style="color:var(--accentL)">' + APP_VERSION + '</strong> · อัปเดต ' + BUILD_DATE +
       '<br>โครงสร้างข้อมูล schema ' + SCHEMA +
-      '<br>' + (navigator.onLine ? '🟢 ออนไลน์ — ได้เวอร์ชันใหม่สุดแล้ว' : '🔵 ออฟไลน์ — ใช้สำเนาในเครื่อง');
+      '<br>' + (navigator.onLine ? '🟢 ออนไลน์ — ได้เวอร์ชันใหม่สุดแล้ว' : '🔵 ออฟไลน์ — ใช้สำเนาในเครื่อง') +
+      '<br><span style="color:var(--dim)">สร้างโดย สิรวิชญ์ นำเบญจพล · นศพ. ปี 1 ม.นเรศวร</span>';
   }
 }
 
@@ -1475,30 +1527,54 @@ function renderFeedback() {
   if (!txt || !act) return;
 
   if (FEEDBACK_URL) {
-    txt.innerHTML = 'เจอบั๊ก อยากได้ฟีเจอร์อะไร หรือใช้แล้วรู้สึกยังไง — บอกได้เลย อ่านทุกข้อความ';
+    txt.innerHTML = 'เจอบั๊ก อยากได้ฟีเจอร์อะไร — บอกได้เลย <strong>อ่านคนเดียวเท่านั้น ไม่มีใครอื่นเห็น</strong>';
     act.innerHTML =
-      '<button class="btn-small accent" onclick="openFeedback()">💬 ส่งฟีดแบ็ก</button>' +
+      '<button class="btn-small accent" onclick="openFeedback()">🐛 แจ้งปัญหา/ฟีดแบ็ก</button>' +
       '<button class="btn-copy" id="copy-diag-btn" onclick="copyDiagnostics()">⎘ copy ข้อมูลเครื่อง</button>';
     note.innerHTML = 'ถ้าแจ้งบั๊ก กด "copy ข้อมูลเครื่อง" แล้ววางลงในฟอร์มด้วย จะช่วยหาสาเหตุได้เร็วขึ้น<br>' +
       '🔒 ข้อมูลเครื่องมีแค่เวอร์ชันแอปกับรุ่นเบราว์เซอร์ <strong>ไม่มีเนื้อหา journal</strong> อยู่ในนั้นเลย';
   } else {
-    txt.innerHTML = '<span style="color:var(--dim)">ยังไม่ได้ตั้งค่าช่องทางฟีดแบ็ก</span>';
+    txt.innerHTML = '<span style="color:var(--dim)">ยังไม่ได้ตั้งค่าช่องทางนี้</span>';
     act.innerHTML = '<button class="btn-copy" id="copy-diag-btn" onclick="copyDiagnostics()">⎘ copy ข้อมูลเครื่อง</button>';
     note.textContent = 'ตั้งค่าได้ที่ตัวแปร FEEDBACK_URL ในไฟล์ index.html';
   }
 }
 
+function renderReview() {
+  const txt = document.getElementById('review-text');
+  const act = document.getElementById('review-actions');
+  const note = document.getElementById('review-note');
+  if (!txt || !act) return;
+
+  const hasWrite = !!REVIEW_URL;
+  const hasRead = !!REVIEW_RESULTS_URL;
+
+  if (!hasWrite && !hasRead) {
+    txt.innerHTML = '<span style="color:var(--dim)">ยังไม่ได้ตั้งค่าช่องทางนี้</span>';
+    act.innerHTML = '';
+    note.textContent = 'ตั้งค่าได้ที่ตัวแปร REVIEW_URL และ REVIEW_RESULTS_URL ในไฟล์ index.html';
+    return;
+  }
+
+  txt.innerHTML = 'อยากรู้ว่าคนอื่นใช้แล้วเป็นยังไงบ้างไหม หรืออยากเล่าประสบการณ์ตัวเอง — คำตอบในนี้เปิดให้คนที่ตอบด้วยกันเห็นได้';
+
+  let html = '';
+  if (hasRead) html += '<button class="btn-small accent" onclick="openReviewResults()">📖 ดูรีวิวจากคนอื่น</button>';
+  if (hasWrite) html += '<button class="btn-small" onclick="openReview()">✍️ เขียนรีวิว</button>';
+  act.innerHTML = html;
+
+  note.innerHTML = '🔓 ต่างจากช่องแจ้งปัญหาด้านล่าง — รีวิวตรงนี้<strong>เปิดให้ทุกคนอ่านได้</strong> อย่าใส่ข้อมูลส่วนตัวหรือสิ่งที่ไม่อยากให้คนอื่นเห็น';
+}
+
 // ── Export / Import — เก็บทุกอย่าง ──
 function handleExport() {
-  let draft = null;
-  try { draft = JSON.parse(localStorage.getItem(K_DRAFT) || 'null'); } catch (err) {}
   const payload = {
     app: 'reflect',
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     entries: entries,
     prefs: prefs,
-    draft: draft
+    drafts: loadAllDrafts()   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1546,9 +1622,25 @@ function handleImport(evt) {
         savePrefs();
         applyQuickMode();
       }
-      // restore draft ถ้าเป็นของวันนี้
-      if (data.draft && data.draft.date === todayKey()) {
-        try { localStorage.setItem(K_DRAFT, JSON.stringify(data.draft)); } catch (err) {}
+      // restore drafts — รองรับทั้งไฟล์ใหม่ (drafts: {...}) และไฟล์เก่า (draft: {...} ตัวเดียว)
+      const incomingDrafts = {};
+      if (data.drafts && typeof data.drafts === 'object') {
+        Object.keys(data.drafts).forEach(function (dt) { incomingDrafts[dt] = data.drafts[dt]; });
+      } else if (data.draft && data.draft.date) {
+        incomingDrafts[data.draft.date] = data.draft;
+      }
+      if (Object.keys(incomingDrafts).length) {
+        const localDrafts = loadAllDrafts();
+        Object.keys(incomingDrafts).forEach(function (dt) {
+          // ถ้าวันนั้นบันทึกเป็น entry แล้ว ไม่ต้องเก็บร่างซ้ำ
+          if (byDate[dt]) return;
+          const inc = incomingDrafts[dt];
+          const cur = localDrafts[dt];
+          const incLen = ((inc.answers || []).join('') + (inc.notes || '') + (inc.intention || '')).trim().length;
+          const curLen = cur ? ((cur.answers || []).join('') + (cur.notes || '') + (cur.intention || '')).trim().length : -1;
+          if (incLen > curLen) localDrafts[dt] = inc;   // เก็บอันที่เนื้อหายาวกว่า กันทับของใหม่กว่าด้วยของเก่า
+        });
+        saveAllDrafts(localDrafts);
       }
 
       alert('นำเข้าสำเร็จ\nเพิ่มใหม่ ' + added + ' วัน' + (updated ? '\nอัปเดต ' + updated + ' วัน' : '') + '\nรวมทั้งหมด ' + entries.length + ' entries');
@@ -1564,12 +1656,46 @@ function handleImport(evt) {
 function handleDeleteAll() {
   if (!window.confirm('ลบ entries ทั้งหมด ' + entries.length + ' รายการ?\nกู้คืนไม่ได้ — แนะนำ export ก่อน')) return;
   if (!window.confirm('ยืนยันอีกครั้ง: ลบทั้งหมดจริงๆ ใช่ไหม?')) return;
-  entries = []; saveEntries(); clearDraft();
+  entries = []; saveEntries(); saveAllDrafts({});
   sliders = freshSliders(); tracker = {sleep:false,exercise:false,social:false}; answers = ['','',''];
   renderAllSliders(); renderQuestions(); updateHeader(); renderSettings();
 }
 
-// ── Draft ──
+// ── Draft — เก็บแยกตามวันที่ ไม่ใช้ช่องเดียวรวมกันทุกวัน ──
+// (บั๊กเดิม: ช่องร่างมีอันเดียว พอเปิดแอปข้ามวัน autosave จะเขียนทับร่างของเมื่อวานทิ้งใน 2 วินาที)
+function loadAllDrafts() {
+  try {
+    const raw = localStorage.getItem(K_DRAFTS);
+    const obj = raw ? JSON.parse(raw) : {};
+    return (obj && typeof obj === 'object') ? obj : {};
+  } catch (err) { return {}; }
+}
+function saveAllDrafts(obj) {
+  try { localStorage.setItem(K_DRAFTS, JSON.stringify(obj)); } catch (err) {}
+}
+// ย้ายร่างรูปแบบเก่า (ช่องเดียว) เข้าระบบใหม่ครั้งเดียวตอนเปิดแอป — กันร่างที่ค้างอยู่ของคนอื่นหายไปเฉยๆ
+function migrateOldDraft() {
+  try {
+    const raw = localStorage.getItem(K_DRAFT);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d && d.date) {
+      const drafts = loadAllDrafts();
+      if (!drafts[d.date]) drafts[d.date] = d;   // ไม่ทับถ้ามีร่างวันนั้นอยู่แล้วในระบบใหม่
+      saveAllDrafts(drafts);
+    }
+    localStorage.removeItem(K_DRAFT);
+  } catch (err) {}
+}
+// ลบร่างที่ค้างนานเกินไป (กันพื้นที่บวมและกันร่างเก่าเกะกะ)
+function pruneOldDrafts() {
+  const drafts = loadAllDrafts();
+  let changed = false;
+  Object.keys(drafts).forEach(function (dt) {
+    if (daysBetween(dt, todayKey()) > DRAFT_MAX_AGE_DAYS) { delete drafts[dt]; changed = true; }
+  });
+  if (changed) saveAllDrafts(drafts);
+}
 function saveDraft() {
   if (!activeDate) return;
   if (document.getElementById('tab-write').classList.contains('hidden')) return;
@@ -1584,35 +1710,44 @@ function saveDraft() {
     notes: (document.getElementById('notes-input') || {}).value || '',
     intention: (document.getElementById('intention-input') || {}).value || '',
   };
-  try { localStorage.setItem(K_DRAFT, JSON.stringify(draft)); } catch (err) {}
+  // ถ้าไม่มีอะไรเขียนเลย ไม่ต้องสร้างร่างเปล่าทิ้งไว้
+  const hasContent = draft.answers.some(function (a) { return a && a.trim(); }) || draft.notes.trim() || draft.intention.trim();
+  const drafts = loadAllDrafts();
+  if (hasContent) {
+    drafts[activeDate] = draft;
+    saveAllDrafts(drafts);
+  } else if (drafts[activeDate]) {
+    // อย่าเขียนทับร่างเดิมที่มีเนื้อหาด้วยค่าว่างเปล่า (นี่คือจุดที่บั๊กเดิมเกิด)
+    // ถ้าฟอร์มว่างแต่มีร่างเก่าค้างอยู่ ปล่อยร่างเดิมไว้เฉยๆ ไม่ต้องแตะ
+  }
 }
-function loadDraft() {
-  try {
-    const raw = localStorage.getItem(K_DRAFT);
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    // ร่างเก่ากว่า 7 วัน ถือว่าไม่ใช้แล้ว
-    if (!d || !d.date || daysBetween(d.date, todayKey()) > 7) { localStorage.removeItem(K_DRAFT); return; }
-    if (d.date !== (activeDate || todayKey())) return;
-    if (d.overall) sliders.overall.val = d.overall;
-    if (d.energy) sliders.energy.val = d.energy;
-    if (d.mood) sliders.mood.val = d.mood;
-    if (d.focus) sliders.focus.val = d.focus;
-    if (d.tracker) {
-      tracker = Object.assign({sleep:false,exercise:false,social:false}, d.tracker);
-      ['sleep','exercise','social'].forEach(function (k) {
-        const b = document.getElementById('tog-' + k);
-        if (b) b.classList.toggle('on', !!tracker[k]);
-      });
-    }
-    if (d.answers) { answers = d.answers.slice(0,3); while (answers.length < 3) answers.push(''); }
-    const n = document.getElementById('notes-input');
-    const i = document.getElementById('intention-input');
-    if (n && d.notes) { n.value = d.notes; autoGrow(n); }
-    if (i && d.intention) { i.value = d.intention; autoGrow(i); }
-  } catch (err) {}
+// คืนร่างของวันที่ dateKey ถ้ามี (ไม่ลบทิ้ง — ใช้ตอนโหลดฟอร์ม)
+function getDraftFor(dateKey) {
+  const drafts = loadAllDrafts();
+  return drafts[dateKey] || null;
 }
-function clearDraft() { try { localStorage.removeItem(K_DRAFT); } catch (err) {} }
+function clearDraft(dateKey) {
+  const drafts = loadAllDrafts();
+  if (dateKey) { delete drafts[dateKey]; }
+  else { return; }
+  saveAllDrafts(drafts);
+}
+// มีร่างค้างของวันอื่น (ไม่ใช่วันนี้) ที่ยังไม่ได้บันทึกเป็น entry ไหม — ใช้เตือนผู้ใช้
+function findOrphanDraftDate() {
+  const drafts = loadAllDrafts();
+  const savedDates = new Set(entries.map(function (e) { return e.date; }));
+  const keys = Object.keys(drafts).filter(function (dt) {
+    if (dt === todayKey()) return false;
+    if (savedDates.has(dt)) return false;
+    const d = drafts[dt];
+    const has = d && (
+      (d.answers || []).some(function (a) { return a && a.trim(); }) ||
+      (d.notes && d.notes.trim()) || (d.intention && d.intention.trim())
+    );
+    return has;
+  }).sort();
+  return keys.length ? keys[keys.length - 1] : null;  // เอาอันล่าสุด
+}
 
 // ── ปุ่มติดตั้ง (Android/Chrome รองรับ, iOS ต้องทำมือ) ──
 let deferredInstall = null;
@@ -1674,6 +1809,9 @@ document.addEventListener('keydown', function (e) {
 });
 
 loadAll();
+document.getElementById('version-line').textContent = 'v' + APP_VERSION + ' · daily journal';
+migrateOldDraft();
+pruneOldDrafts();
 activeDate = todayKey();
 applyQuickMode();
 wireGrow(document.getElementById('notes-input'));
