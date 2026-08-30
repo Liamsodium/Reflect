@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Reflect" />
+  <meta name="theme-color" content="#060b14" />
+  <title>Reflect</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-180.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060b14; --card: #0d1624; --border: #1e293b;
+      --text: #f1f5f9; --muted: #94a3b8; --dim: #64748b;
+      --accent: #6366f1; --accentL: #c7d2fe;
+      --green: #22c55e; --yellow: #eab308; --red: #ef4444;
+      --orange: #f97316; --label: #a5b4fc;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { overflow-x: hidden; }
+    @keyframes up { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+    .anim { animation: up 0.3s ease; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Header */
+    #header { padding: max(20px, env(safe-area-inset-top)) 20px 0; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .app-title { font-size: 20px; font-weight: 300; letter-spacing: 0.18em; font-family: 'DM Mono', monospace; color: #f1f5f0; }
+    .app-sub { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-top: 3px; }
+    .header-right { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+    .header-right .due { color: var(--red); margin-top: 3px; }
+    .header-right .ok { color: var(--dim); margin-top: 3px; }
+    .streak { color: var(--orange); margin-top: 3px; font-size: 11px; }
+
+    /* Tabs */
+    .tabs { display: flex; margin-top: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn { flex-shrink: 0; padding: 10px 13px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; transition: all 0.15s; white-space: nowrap; }
+    .tab-btn.active { border-bottom-color: var(--accent); color: var(--accentL); }
+
+    /* Body */
+    #body { padding: 20px; max-width: 640px; margin: 0 auto; padding-bottom: calc(50px + env(safe-area-inset-bottom)); }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .lbl { display: block; font-size: 11px; color: var(--label); letter-spacing: 0.13em; font-family: 'DM Mono', monospace; margin-bottom: 12px; text-transform: uppercase; }
+
+    /* Mode switch */
+    .mode-switch { display: flex; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 6px; margin-bottom: 14px; }
+    .mode-btn { flex: 1; padding: 10px 0; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-weight: 500; transition: all 0.15s; }
+    .mode-btn.active { background: rgba(99,102,241,0.16); color: var(--accentL); }
+    .mode-hint { font-size: 11px; color: var(--dim); text-align: center; margin: -6px 0 14px; font-family: 'DM Mono', monospace; }
+
+    /* Slider */
+    .slider-row { margin-bottom: 14px; }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .slider-name { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .slider-val { font-size: 18px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .slider-bars { display: flex; gap: 4px; }
+    .bar-seg { flex: 1; height: 9px; border-radius: 4px; border: none; cursor: pointer; transition: all 0.12s; background: var(--border); }
+    .bar-seg.active { transform: scaleY(1.6); }
+
+    /* Toggle */
+    .toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toggle-btn { display: flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Sarabun', sans-serif; }
+    .toggle-btn.on { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+
+    .prompt-text { font-size: 15px; color: #cbd5e1; line-height: 1.65; margin-bottom: 10px; font-weight: 300; }
+
+    /* Textarea — taller for dictation */
+    textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; padding: 12px; resize: none; overflow: hidden; min-height: 110px; font-family: 'Sarabun', sans-serif; line-height: 1.7; outline: none; }
+    textarea:focus { border-color: var(--accent); }
+    textarea.short { min-height: 80px; }
+    .mic-hint { font-size: 11px; color: var(--dim); margin-top: 7px; font-family: 'DM Mono', monospace; }
+
+    /* Search */
+    .search-box { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 12px 14px; font-family: 'Sarabun', sans-serif; outline: none; margin-bottom: 14px; }
+    .search-box:focus { border-color: var(--accent); }
+    mark { background: rgba(99,102,241,0.35); color: var(--accentL); border-radius: 2px; padding: 0 2px; }
+
+    /* Buttons */
+    .btn-primary { width: 100%; padding: 15px 0; border-radius: 10px; border: none; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .btn-secondary { width: 100%; padding: 14px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .btn-small { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; display: inline-block; }
+    .btn-small.accent { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
+    .btn-small.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); color: var(--red); }
+    .btn-copy { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+    .btn-copy.copied { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); color: var(--green); }
+
+    .week-btn { padding: 8px 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; }
+
+    /* Post-submit */
+    .submit-icon { text-align: center; padding: 24px 0 28px; }
+    .submit-icon .star { font-size: 34px; margin-bottom: 8px; }
+    .submit-icon p { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 0.1em; }
+    .submit-icon .sub { color: var(--dim); font-size: 11px; margin-top: 6px; letter-spacing: 0; }
+    .md-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.7; white-space: pre-wrap; max-height: 260px; overflow-y: auto; }
+
+    /* Chart */
+    .bar-chart { display: flex; gap: 3px; align-items: flex-end; height: 68px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .bar-fill { width: 100%; border-radius: 3px 3px 0 0; opacity: 0.85; }
+    .bar-label { font-size: 8px; color: var(--dim); font-family: 'DM Mono', monospace; }
+    .chart-sub { font-size: 10px; color: var(--dim); margin-top: 8px; font-family: 'DM Mono', monospace; }
+
+    /* Calendar */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .cal-cell { aspect-ratio: 1; border-radius: 5px; background: var(--border); opacity: 0.35; }
+    .cal-cell.has { opacity: 1; }
+    .cal-dow { font-size: 9px; color: var(--dim); text-align: center; font-family: 'DM Mono', monospace; }
+
+    /* Tracker boxes */
+    .tracker-boxes { display: flex; gap: 8px; }
+    .tracker-box { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 6px; text-align: center; }
+    .tracker-box .icon { font-size: 22px; }
+    .tracker-box .num { font-size: 18px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .tracker-box .name { font-size: 10px; color: var(--dim); margin-top: 2px; }
+
+    /* Monthly */
+    .month-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .month-key { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; min-width: 60px; }
+    .month-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+    .month-bar-fill { height: 100%; border-radius: 3px; }
+    .month-val { font-size: 11px; font-family: 'DM Mono', monospace; min-width: 30px; }
+
+    /* History */
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+    details > summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    .entry-date { font-size: 13px; color: #cbd5e1; font-family: 'DM Mono', monospace; }
+    .entry-scores { display: flex; gap: 8px; margin-top: 4px; }
+    .entry-score { font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; }
+    .entry-overall { font-size: 20px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .entry-overall span { font-size: 11px; color: var(--dim); }
+    .entry-body { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .entry-q { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .entry-a { font-size: 14px; color: #cbd5e1; line-height: 1.7; margin-bottom: 12px; }
+    .entry-section { border-top: 1px solid var(--border); padding-top: 10px; margin-bottom: 10px; }
+    .entry-section-label { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+
+    /* Throwback */
+    .throwback { background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(124,58,237,0.06)); border: 1px solid rgba(99,102,241,0.3); }
+    .tb-when { font-size: 11px; color: var(--accentL); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+    .tb-text { font-size: 14px; color: #cbd5e1; line-height: 1.7; }
+
+    /* Stats */
+    .stat-boxes { display: flex; gap: 8px; }
+    .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 6px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 700; color: var(--accentL); font-family: 'DM Mono', monospace; }
+    .stat-label { font-size: 10px; color: var(--dim); margin-top: 3px; }
+
+    .today-notice { font-size: 13px; color: var(--accentL); margin: 0; }
+    .settings-text { font-size: 13px; color: var(--muted); line-height: 1.75; margin-bottom: 14px; }
+    .settings-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .q-item { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+    .q-num { color: var(--dim); font-family: 'DM Mono', monospace; }
+    .settings-note { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; margin-top: 8px; }
+    .insight { display: flex; gap: 11px; padding: 11px 0; border-top: 1px solid var(--border); font-size: 13px; color: #cbd5e1; line-height: 1.65; }
+    .insight:first-child { border-top: none; padding-top: 0; }
+    .insight .ico { flex-shrink: 0; width: 20px; font-size: 15px; }
+    .insight b { color: var(--text); font-weight: 600; }
+    .insight .up { color: var(--green); font-weight: 600; }
+    .insight .down { color: var(--orange); font-weight: 600; }
+
+    .date-row { display: flex; gap: 8px; align-items: center; }
+    .date-nav { width: 42px; height: 44px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--accentL); font-size: 20px; cursor: pointer; font-family: 'DM Mono', monospace; }
+    .date-nav:disabled { opacity: 0.3; cursor: default; color: var(--dim); }
+    .date-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 12px; font-family: 'DM Mono', monospace; outline: none; text-align: center; }
+    .date-input:focus { border-color: var(--accent); }
+    .date-status { font-size: 12px; margin-top: 10px; font-family: 'DM Mono', monospace; color: var(--dim); }
+    .date-status.past { color: var(--orange); }
+    .entry-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .tip-list { list-style: none; padding: 0; margin: 0; }
+    .tip-list li { font-size: 13px; color: var(--muted); line-height: 1.7; padding: 12px 0 12px 16px; border-top: 1px solid var(--border); position: relative; }
+    .tip-list li:first-child { border-top: none; padding-top: 0; }
+    .tip-list li::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-weight: 600; }
+    .tip-list li:first-child::before { top: 0; }
+    .tip-list strong { color: var(--text); font-weight: 600; }
+
+    .info-box { background: #16213a; border-radius: 8px; padding: 12px; font-size: 12px; color: var(--muted); line-height: 1.75; }
+    .warn-box { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25); border-radius: 8px; padding: 12px; font-size: 12px; color: #fde68a; line-height: 1.7; }
+    .prompt-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 13px; font-size: 13px; color: #cbd5e1; line-height: 1.7; }
+
+    /* Welcome */
+    #welcome { position: fixed; inset: 0; background: var(--bg); z-index: 100; overflow-y: auto; padding: max(30px, env(safe-area-inset-top)) 24px calc(30px + env(safe-area-inset-bottom)); }
+    .w-inner { max-width: 460px; margin: 0 auto; }
+    .w-title { font-size: 30px; font-weight: 300; letter-spacing: 0.16em; font-family: 'DM Mono', monospace; margin: 30px 0 6px; }
+    .w-sub { font-size: 13px; color: var(--dim); font-family: 'DM Mono', monospace; margin-bottom: 32px; }
+    .w-item { display: flex; gap: 13px; margin-bottom: 20px; align-items: flex-start; }
+    .w-icon { font-size: 20px; line-height: 1.3; flex-shrink: 0; width: 26px; }
+    .w-h { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .w-p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+    .guide-close { position: absolute; top: max(24px, env(safe-area-inset-top)); right: 20px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 15px; cursor: pointer; z-index: 2; }
+
+    #loading { display: flex; align-items: center; justify-content: center; height: 100vh; font-family: 'DM Mono', monospace; color: var(--dim); font-size: 13px; }
+    .hidden { display: none !important; }
+    .flex-row { display: flex; gap: 8px; }
+    .flex-wrap { flex-wrap: wrap; }
+    .mt-8 { margin-top: 8px; }
+    .mt-10 { margin-top: 10px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-14 { margin-top: 14px; }
+    .mb-0 { margin-bottom: 0; }
+    .empty { color: var(--dim); font-size: 13px; text-align: center; padding: 34px 10px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+<div id="loading">loading...</div>
+
+<!-- WELCOME (first run only) -->
+<div id="welcome" class="hidden">
+  <button id="guide-close" class="guide-close hidden" onclick="closeGuide()" aria-label="ปิด">✕</button>
+  <div class="w-inner">
+    <div class="w-title">reflect.</div>
+    <div class="w-sub" id="guide-sub">สมุดบันทึกส่วนตัว</div>
+
+    <div class="w-item">
+      <div class="w-icon">✍</div>
+      <div>
+        <div class="w-h">เขียนวันละครั้ง</div>
+        <div class="w-p">ให้คะแนนวันนี้ ตอบคำถามที่เปลี่ยนทุกวัน วันไหนไม่มีแรงใช้ "โหมดรีบ" 15 วินาทีก็จบ</div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">✎</div>
+      <div>
+        <div class="w-h">แก้ไขทีหลังได้เสมอ</div>
+        <div class="w-p">บันทึกแล้วไม่ได้แปลว่าจบ — กลับมาแก้หรือเขียนเพิ่มได้ทุกเมื่อที่แท็บ <strong style="color:var(--accentL)">◷ ย้อนหลัง</strong> และถ้าลืมเขียนวันไหน ก็ย้อนไปเขียนวันนั้นได้</div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">🔒</div>
+      <div>
+        <div class="w-h">ข้อมูลอยู่ในเครื่องคุณเท่านั้น</div>
+        <div class="w-p">ไม่มีบัญชี ไม่มีการส่งข้อมูลออกไปที่ไหน ไม่มีใครอ่านได้นอกจากคุณ — แต่ก็แปลว่าถ้าล้างประวัติเบราว์เซอร์ ข้อมูลจะหาย <strong style="color:var(--accentL)">Export เก็บไว้เป็นระยะ</strong></div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">📲</div>
+      <div>
+        <div class="w-h">ติดตั้งลงหน้าโฮมก่อนเริ่มเขียน</div>
+        <div class="w-p">iPhone: กดปุ่มแชร์ → "Add to Home Screen"<br>Android: เมนู ⋮ → "ติดตั้งแอป"<br><strong style="color:var(--accentL)">ไม่ใช่แค่ความสะดวก</strong> — Safari จะลบข้อมูลของเว็บที่ไม่ได้เปิดนานๆ แต่แอปที่อยู่บนหน้าโฮมจะได้รับการยกเว้น</div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">✈️</div>
+      <div>
+        <div class="w-h">ใช้ได้แม้ไม่มีเน็ต</div>
+        <div class="w-p">เขียนได้ตอนนั่งรถหรืออยู่ในตึกที่สัญญาณไม่ดี และเวลามีเวอร์ชันใหม่ แอปจะอัปเดตเองเมื่อกลับมาออนไลน์</div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">🎙</div>
+      <div>
+        <div class="w-h">พูดแทนพิมพ์ได้</div>
+        <div class="w-p">กดในช่องเขียนแล้วใช้ไมค์บนคีย์บอร์ด (หรือ Wispr Flow) พูดเร็วกว่าพิมพ์หลายเท่า</div>
+      </div>
+    </div>
+
+    <div class="warn-box mt-14" style="margin-bottom:18px">
+      แอปนี้เป็นเครื่องมือบันทึกความคิดส่วนตัว ไม่ใช่เครื่องมือทางการแพทย์ และไม่ใช้ประเมินหรือวินิจฉัยภาวะสุขภาพจิต หากรู้สึกไม่ไหว การคุยกับคนที่ไว้ใจหรือผู้เชี่ยวชาญช่วยได้มากกว่าการเขียนคนเดียว
+    </div>
+
+    <button class="btn-primary" id="guide-cta" onclick="finishWelcome()">เริ่มเขียน →</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">reflect.</div>
+        <div class="app-sub" id="version-line">v · daily journal</div>
+      </div>
+      <div class="header-right">
+        <div id="entry-count">◈ 0 entries</div>
+        <div id="days-since" class="ok"></div>
+        <div id="streak-line" class="streak"></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="write">✍ เขียน</button>
+      <button class="tab-btn" data-tab="chart">📊 กราฟ</button>
+      <button class="tab-btn" data-tab="history">◷ ย้อนหลัง</button>
+      <button class="tab-btn" data-tab="settings">⚙ ตั้งค่า</button>
+    </div>
+  </div>
+
+  <div id="body">
+
+    <!-- WRITE -->
+    <div id="tab-write" class="anim">
+
+      <div id="alert-card" class="card hidden" style="border-color:rgba(234,179,8,0.35);background:rgba(234,179,8,0.07)">
+        <div style="font-size:13px;color:#fde68a;line-height:1.7" id="alert-text"></div>
+        <div class="mt-12"><button class="btn-small accent" id="alert-action">ไปหน้า export →</button></div>
+      </div>
+
+      <div id="throwback-card" class="card throwback hidden">
+        <div class="tb-when" id="tb-when"></div>
+        <div class="tb-text" id="tb-text"></div>
+      </div>
+
+      <div id="today-notice-card" class="card hidden">
+        <p class="today-notice">✓ คุณเขียนของวันนี้แล้ว — ที่เห็นด้านล่างคือสิ่งที่บันทึกไว้ แก้ตรงนี้แล้วกดบันทึกซ้ำได้เลย หรือดูบันทึกเก่าวันอื่นที่แท็บ ◷ ย้อนหลัง</p>
+      </div>
+
+      <div class="card" id="date-card">
+        <span class="lbl">เขียนของวันไหน</span>
+        <div class="date-row">
+          <button class="date-nav" onclick="stepDate(-1)" aria-label="วันก่อน">‹</button>
+          <input type="date" id="date-input" class="date-input" onchange="onDatePick(this.value)" />
+          <button class="date-nav" id="date-next" onclick="stepDate(1)" aria-label="วันถัดไป">›</button>
+        </div>
+        <div class="flex-row flex-wrap mt-10">
+          <button class="week-btn" onclick="setActiveDate(todayKey())">วันนี้</button>
+          <button class="week-btn" onclick="setActiveDate(shiftKey(todayKey(),-1))">เมื่อวาน</button>
+          <button class="week-btn" onclick="setActiveDate(shiftKey(todayKey(),-2))">2 วันก่อน</button>
+        </div>
+        <p class="date-status" id="date-status"></p>
+      </div>
+
+      <div class="mode-switch">
+        <button class="mode-btn" id="mode-full" onclick="setQuickMode(false)">เขียนเต็ม</button>
+        <button class="mode-btn" id="mode-quick" onclick="setQuickMode(true)">⚡ โหมดรีบ</button>
+      </div>
+      <div class="mode-hint" id="mode-hint"></div>
+
+      <div class="card">
+        <span class="lbl" id="lbl-scores">คะแนนวันนี้</span>
+        <div id="slider-overall"></div>
+        <div id="slider-energy"></div>
+        <div id="slider-mood"></div>
+        <div id="slider-focus"></div>
+      </div>
+
+      <div class="card">
+        <span class="lbl" id="lbl-tracker">วันนี้</span>
+        <div class="toggles">
+          <button class="toggle-btn" id="tog-sleep" onclick="toggleTracker('sleep')">😴 นอนพอ</button>
+          <button class="toggle-btn" id="tog-exercise" onclick="toggleTracker('exercise')">🏃 ออกกำลังกาย</button>
+          <button class="toggle-btn" id="tog-social" onclick="toggleTracker('social')">👥 เจอคน</button>
+        </div>
+      </div>
+
+      <div id="questions-area"></div>
+
+      <div class="card" id="notes-card">
+        <span class="lbl">บันทึกเพิ่มเติม (ไม่บังคับ)</span>
+        <textarea id="notes-input" class="short" placeholder="อะไรก็ได้ที่อยากเขียน..."></textarea>
+      </div>
+
+      <div class="card" id="intention-card">
+        <span class="lbl" id="lbl-intention">Intention — อยากทำหรือเป็นอะไรในวันนี้หรือพรุ่งนี้</span>
+        <textarea id="intention-input" class="short" placeholder="หนึ่งประโยค..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="handleSubmit()">บันทึก →</button>
+    </div>
+
+    <!-- POST SUBMIT -->
+    <div id="tab-submitted" class="anim hidden">
+      <div class="submit-icon">
+        <div class="star">✦</div>
+        <p>บันทึกแล้ว</p>
+        <div class="sub" id="submit-streak"></div>
+      </div>
+      <div class="card" style="border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)">
+        <p style="font-size:13px;color:var(--accentL);line-height:1.7;margin:0">
+          ✎ <strong>แก้ไขได้ทุกเมื่อ</strong> — บันทึกแล้วไม่ได้แปลว่าจบ ถ้าอยากกลับมาแก้หรือเขียนเพิ่ม ไปที่แท็บ <strong>◷ ย้อนหลัง</strong> แล้วกดปุ่มแก้ไขที่บันทึกนั้นได้เลย ไม่จำกัดเวลา
+        </p>
+      </div>
+      <div class="card">
+        <span class="lbl">Markdown สำหรับ Obsidian</span>
+        <div class="md-box" id="md-output"></div>
+        <div class="mt-10">
+          <button class="btn-copy" id="copy-md-btn" onclick="copyMD()">⎘ copy markdown</button>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="showWrite()">← กลับ</button>
+    </div>
+
+    <!-- CHART -->
+    <div id="tab-chart" class="anim hidden">
+      <div class="card" id="insight-card">
+        <span class="lbl">สรุปสัปดาห์นี้</span>
+        <div id="insight-body"></div>
+        <p class="settings-note" id="insight-note"></p>
+      </div>
+      <div class="card">
+        <span class="lbl">30 วันล่าสุด</span>
+        <div id="calendar-grid"></div>
+        <p class="chart-sub" id="calendar-sub"></p>
+      </div>
+      <div class="card">
+        <span class="lbl">Overall Score — 14 วันล่าสุด</span>
+        <div id="mini-bar-chart"></div>
+      </div>
+      <div class="card">
+        <span class="lbl">Tracker สัปดาห์นี้</span>
+        <div id="tracker-week"></div>
+      </div>
+      <div class="card" id="monthly-avg-card">
+        <span class="lbl">Overall เฉลี่ยรายเดือน</span>
+        <div id="monthly-avg"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-history" class="anim hidden">
+      <input class="search-box" id="search-input" type="search" placeholder="ค้นหา… เช่น สอบ, ว่ายน้ำ, เหนื่อย" oninput="renderHistory()" />
+      <div style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:11px 13px;margin:0 0 14px;font-size:13px;color:#fde68a;line-height:1.6">✎ แตะที่บันทึกเพื่อเปิดอ่าน แล้วกด <strong>✎ แก้ไข</strong> เพื่อกลับไปแก้ได้ทุกเมื่อ ไม่จำกัดเวลา</div>
+      <span class="lbl" id="history-count">0 entries</span>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" class="anim hidden">
+
+      <div class="card">
+        <span class="lbl">Backup &amp; Restore</span>
+        <p class="settings-text">Export จะเก็บ <strong style="color:var(--text)">ทุกอย่าง</strong> — entries, การตั้งค่า และร่างที่ยังไม่บันทึก ไว้ในไฟล์เดียว พอมีเวอร์ชันใหม่ของแอป กด Import ไฟล์นี้กลับมาก็ได้ทุกอย่างคืนครบ</p>
+        <div class="info-box">
+          <strong style="color:var(--text)">ควร export เมื่อไหร่</strong><br>
+          • ทุกสิ้นเดือน เก็บไว้ใน iCloud Drive / Google Drive<br>
+          • ก่อนเปลี่ยนมือถือเครื่องใหม่<br>
+          • ก่อนล้างประวัติเบราว์เซอร์<br><br>
+          <strong style="color:var(--green)">ไม่ต้อง export ตอนแอปอัปเดตเวอร์ชัน</strong> — ตัวแอปกับข้อมูลเก็บแยกกัน อัปเดตกี่ครั้งข้อมูลก็อยู่ครบ
+        </div>
+        <p class="settings-text" style="margin-top:14px;margin-bottom:0">
+          <span class="warn-box" style="display:block">⚠️ ข้อมูลเก็บอยู่ในเบราว์เซอร์เครื่องนี้เท่านั้น ถ้าล้างประวัติเบราว์เซอร์ ข้อมูลจะหายและกู้คืนไม่ได้ ถ้าไม่มีไฟล์ backup</span>
+        </p>
+        <div class="settings-row mt-14">
+          <button class="btn-small accent" onclick="handleExport()">↓ export ทั้งหมด</button>
+          <label class="btn-small" style="cursor:pointer">
+            ↑ import
+            <input type="file" accept=".json" style="display:none" onchange="handleImport(event)" />
+          </label>
+        </div>
+        <p class="settings-note" id="last-export-note"></p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">Tips</span>
+        <ul class="tip-list">
+          <li><strong>วันที่ไม่มีแรง ใช้โหมดรีบ</strong><br>เขียนสั้นๆ ยังดีกว่าข้ามไปเลย — การไม่ขาดวันสำคัญกว่าความยาว</li>
+          <li><strong>พูดแทนพิมพ์</strong><br>กดในช่องเขียนแล้วใช้ไมค์บนคีย์บอร์ด เร็วกว่าพิมพ์ 3–4 เท่า และมักได้ความรู้สึกจริงกว่า</li>
+          <li><strong>เขียนเวลาเดิมทุกวัน</strong><br>ผูกไว้กับสิ่งที่ทำอยู่แล้ว เช่น หลังแปรงฟัน หรือก่อนวางมือถือนอน จะกลายเป็นนิสัยเร็วขึ้น</li>
+          <li><strong>ลืมเขียนเมื่อวาน? ย้อนได้</strong><br>ในหน้าเขียน กดปุ่ม ‹ หรือเลือกวันที่ด้านบน เขียนย้อนหลังได้ทุกวัน — พลาดวันไม่ได้แปลว่าต้องเลิก</li>
+          <li><strong>ไม่ต้องตอบให้ครบทุกคำถาม</strong><br>ข้อไหนไม่มีอะไรจะเขียน เว้นไว้ได้ ไม่ต้องฝืนหาเรื่องมาเขียน</li>
+          <li><strong>ใช้ช่องค้นหาในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียว เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
+          <li><strong>Export ทุกสิ้นเดือน</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
+          <li><strong>อ่านย้อนหลังบ้าง ไม่ใช่แค่เขียน</strong><br>เปิดดู 1 เดือนก่อนแล้วเทียบกับวันนี้ จะเห็นสิ่งที่ตอนอยู่ในนั้นมองไม่เห็น</li>
+        </ul>
+        <div class="mt-14">
+          <button class="btn-small accent" onclick="openGuide()">📖 เปิดคู่มือเริ่มต้น</button>
+        </div>
+      </div>
+
+      <div class="card" id="review-card">
+        <span class="lbl">รีวิวจากผู้ใช้ (สาธารณะ)</span>
+        <p class="settings-text" id="review-text"></p>
+        <div class="settings-row" id="review-actions"></div>
+        <p class="settings-note" id="review-note"></p>
+      </div>
+
+      <div class="card" id="feedback-card">
+        <span class="lbl">แจ้งปัญหา / ฟีดแบ็กถึงผู้พัฒนา</span>
+        <p class="settings-text" id="feedback-text"></p>
+        <div class="settings-row" id="feedback-actions"></div>
+        <p class="settings-note" id="feedback-note"></p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">ใช้ AI ช่วยวิเคราะห์ (ไม่บังคับ)</span>
+        <p class="settings-text">แอปนี้ไม่มี AI ในตัว เพราะคุณภาพจะสู้การคุยกับ AI ตัวเต็มไม่ได้ ถ้าอยากได้บทวิเคราะห์ ทำแบบนี้:</p>
+        <div class="info-box">
+          <strong style="color:var(--text)">1.</strong> กด "export ทั้งหมด" ด้านบน<br>
+          <strong style="color:var(--text)">2.</strong> เปิด AI ที่ใช้อยู่ (Claude / ChatGPT / Gemini)<br>
+          <strong style="color:var(--text)">3.</strong> วาง prompt ข้างล่าง แล้วแนบไฟล์ .json<br>
+          <strong style="color:var(--text)">4.</strong> ถามต่อได้เรื่อยๆ — ตรงนี้คือส่วนที่มีค่าที่สุด
+        </div>
+        <p class="settings-text mt-14" style="margin-bottom:8px">Prompt แนะนำ:</p>
+        <div class="prompt-box" id="ai-prompt-text">นี่คือ journal ของฉัน ช่วยดูว่ามี pattern อะไรเด่นบ้าง มีอะไรที่ควรระวัง แล้วให้กำลังใจแบบตรงไปตรงมา ไม่ต้องชมเกินจริง ถ้าเห็นอะไรที่ฉันอาจไม่ทันสังเกตเกี่ยวกับตัวเอง บอกได้เลย</div>
+        <div class="mt-12">
+          <button class="btn-copy" id="copy-prompt-btn" onclick="copyPrompt()">⎘ copy prompt</button>
+        </div>
+        <div class="warn-box mt-14">
+          🔒 การวาง journal ในแชท AI = ส่งข้อมูลออกจากเครื่องไปให้บริษัทอื่น อ่านสิ่งที่จะแชร์ก่อนตัดสินใจทุกครั้ง ถ้ามีเรื่องที่ไม่อยากให้ใครเห็น ลบส่วนนั้นออกก่อน
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">สถิติ</span>
+        <div class="stat-boxes" id="stats-boxes"></div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">คำถามวันนี้</span>
+        <div id="settings-questions"></div>
+        <p class="settings-note" id="settings-note"></p>
+      </div>
+
+      <div class="card" id="install-card">
+        <span class="lbl">ติดตั้งลงหน้าโฮม</span>
+        <div class="warn-box" style="margin-bottom:14px">
+          🛡 <strong>สำคัญกว่าที่คิด</strong> — Safari จะลบข้อมูลของเว็บที่ไม่ได้เปิดนานๆ ทิ้ง แต่ถ้าติดตั้งลงหน้าโฮมแล้วจะได้รับการยกเว้น การติดตั้งจึงช่วยป้องกัน journal หายด้วย
+        </div>
+        <div class="info-box">
+          <strong style="color:var(--text)">iPhone / iPad (ต้องใช้ Safari)</strong><br>
+          1. กดปุ่มแชร์ <span style="font-family:monospace">⇪</span> ตรงกลางแถบล่าง<br>
+          2. เลื่อนลงหา <strong style="color:var(--accentL)">"Add to Home Screen"</strong><br>
+          3. กด Add<br><br>
+          <strong style="color:var(--text)">Android (Chrome)</strong><br>
+          กดเมนู ⋮ มุมขวาบน → <strong style="color:var(--accentL)">"ติดตั้งแอป"</strong>
+        </div>
+        <div class="mt-14 hidden" id="install-btn-wrap">
+          <button class="btn-small accent" onclick="promptInstall()">📲 ติดตั้งเลย</button>
+        </div>
+        <p class="settings-note" id="install-status"></p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">เวอร์ชัน</span>
+        <div class="info-box" id="version-info"></div>
+        <p class="settings-text mt-14" style="margin-bottom:0">แอปจะดึงเวอร์ชันใหม่จากเน็ตเองทุกครั้งที่เปิด ไม่ต้องกดอัปเดต ไม่ต้องลบแล้วติดตั้งใหม่ และข้อมูลที่จดไว้ไม่หาย</p>
+        <div class="mt-14">
+          <button class="btn-small" onclick="forceRefresh()">↻ ตรวจหาเวอร์ชันใหม่</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">Reminder ประจำวัน</span>
+        <p class="settings-text">เว็บแอปส่ง notification ไม่ได้ แต่ตั้ง reminder ในเครื่องได้ง่ายๆ</p>
+        <div class="info-box">
+          1. เปิด <strong style="color:var(--text)">Reminders</strong> หรือ <strong style="color:var(--text)">Clock → Alarm</strong><br>
+          2. ตั้งเวลา <strong style="color:var(--accentL)">21:00</strong> ทุกวัน<br>
+          3. ตั้งชื่อว่า <strong style="color:var(--accentL)">"เขียน Reflect"</strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">ลบข้อมูลทั้งหมด</span>
+        <p class="settings-text" style="margin-bottom:12px">แนะนำให้ export เก็บไว้ก่อน — ลบแล้วกู้คืนไม่ได้</p>
+        <button class="btn-small danger" onclick="handleDeleteAll()">ลบทั้งหมด</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STORAGE KEYS — เพิ่มใหม่ได้ แต่อย่าเปลี่ยนชื่อเดิม
+// ═══════════════════════════════════════════
+const K_ENTRIES = 'reflect_v3';        // คงชื่อเดิมไว้เพื่อความเข้ากันได้
+const K_DRAFT    = 'reflect_draft_v3';   // ชื่อเก่า — เก็บไว้เพื่อ migrate ข้อมูลที่อาจค้างอยู่
+const K_DRAFTS   = 'reflect_drafts_v1';  // ใหม่: เก็บร่างแยกตามวันที่ กันร่างวันอื่นถูกเขียนทับ
+const DRAFT_MAX_AGE_DAYS = 30;
+const K_PREFS   = 'reflect_prefs';
+const EXPORT_VERSION = 4;
+
+const APP_VERSION = '7.4';
+const BUILD_DATE  = '8 ส.ค. 69';
+
+// ┌──────────────────────────────────────────────────────────┐
+// │  ใส่ลิงก์ Google Form ของคุณตรงนี้ (แก้ที่เดียวจบ)         │
+// │  ถ้าเว้นว่างไว้ ปุ่มฟีดแบ็กจะยังไม่โชว์                    │
+// └──────────────────────────────────────────────────────────┘
+const FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSegkWjP9o8ud3MUk0G6h8a_ORGEju-1tQ5eZi5NEunErsRsmQ/viewform';
+
+// ┌──────────────────────────────────────────────────────────┐
+// │  ลิงก์รีวิวสาธารณะ — คนละฟอร์มกับ FEEDBACK_URL ด้านบน       │
+// │  REVIEW_URL          = ลิงก์ "เขียนรีวิว" (ลงท้าย /viewform)   │
+// │  REVIEW_RESULTS_URL  = ลิงก์ "ดูรีวิวคนอื่น" (ลงท้าย /viewanalytics) │
+// │  ต้องเปิด "View results summary" ในฟอร์มนั้นไว้ก่อน           │
+// └──────────────────────────────────────────────────────────┘
+const REVIEW_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScQcLBIrpPE_CnJWDLKgRbJ-RNGpaXlh7imitwL06mcnRm56A/viewform';
+const REVIEW_RESULTS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScQcLBIrpPE_CnJWDLKgRbJ-RNGpaXlh7imitwL06mcnRm56A/viewanalytics';
+const SCHEMA      = 2;              // เลขโครงสร้างข้อมูล — เพิ่มขึ้นเมื่อเปลี่ยนรูปแบบ
+const EXPORT_REMIND_DAYS = 30;      // เตือน export ถ้าเกินกี่วัน
+const QUOTA_CHARS = 2600000;        // พื้นที่ประมาณ 5MB (นับเป็นตัวอักษร)
+const QUOTA_WARN  = 0.70;           // เตือนเมื่อใช้ถึง 70%
+
+const PROMPTS = [
+  'วันนี้ฉันรู้สึกอย่างไร และอะไรทำให้รู้สึกแบบนั้น?',
+  'สิ่งที่ฉันภูมิใจในตัวเองวันนี้คืออะไร แม้เพียงเล็กน้อย?',
+  'สิ่งที่ท้าทายฉันมากที่สุดตอนนี้ และฉันรับมือมันอย่างไร?',
+  'ถ้าฉันบอกอะไรกับตัวเองในอดีตได้ ฉันจะบอกว่าอะไร?',
+  'อะไรให้พลังงานฉัน และอะไรดูดพลังงานฉันไปในช่วงนี้?',
+  'ฉันกำลังหลีกเลี่ยงสิ่งใดอยู่ และทำไมถึงเป็นแบบนั้น?',
+  'ฉันดูแลตัวเองดีพอไหมในช่วงนี้? มีอะไรที่ต้องการมากกว่านี้ไหม?',
+  'มีสิ่งไหนที่ฉันอยากปล่อยวาง แต่ยังทำไม่ได้?',
+  'ถ้าความกลัวไม่มีอยู่ ฉันจะทำอะไรแตกต่างออกไป?',
+  'อะไรทำให้ฉันรู้สึกมีชีวิตชีวาและมีความหมายมากที่สุด?',
+  "ฉันนิยาม 'ความสำเร็จ' อย่างไรในช่วงชีวิตนี้?",
+  'มีเสียงในหัวที่พูดกับฉันในแง่ลบซ้ำๆ ไหม? มันพูดว่าอะไร?',
+  'ฉันรู้สึกอย่างไรกับร่างกายและสุขภาพของตัวเองตอนนี้?',
+  'ฉันรู้สึกเชื่อมต่อกับคนรอบข้างไหม หรือรู้สึกโดดเดี่ยว?',
+  'อะไรที่ฉันอยากทำแต่ยังไม่ได้ลงมือ และอะไรขัดขวางอยู่?',
+  'ฉันอยากรู้สึกอย่างไรในสัปดาห์นี้ และจะทำอะไรให้ได้รู้สึกแบบนั้น?',
+  'ฉันได้เรียนรู้อะไรในช่วงนี้ ทั้งเรื่องตัวเองและโลกรอบข้าง?',
+  'มีสิ่งใหม่อะไรที่ฉันอยากลองทำแต่ยังลังเลอยู่?',
+  'วันนี้มีสามสิ่งที่ฉันรู้สึกขอบคุณ คืออะไรบ้าง?',
+  'มีสามคนที่ฉันรู้สึกขอบคุณในชีวิตตอนนี้ คือใคร และทำไม?',
+  'มี habit อะไรที่ฉันรู้สึกว่าดีกับตัวเองอยู่แล้ว จนไม่อยากเปลี่ยนมัน เพราะอะไร?',
+  'วันนี้ฉันได้เป็นตัวเองอย่างแท้จริงในช่วงไหนบ้าง?',
+  'ตอนนี้คนสำคัญในชีวิตฉันมีใครบ้าง และฉันดูแลความสัมพันธ์เหล่านั้นดีพอไหม?',
+  'สิ่งที่ฉันทำในแต่ละวัน ตรงกับสิ่งที่ฉันให้ความสำคัญจริงๆ ไหม?',
+  'วันในฝันของฉันเป็นอย่างไร และวันนี้ฉันนำส่วนหนึ่งของมันมาใช้ได้บ้างไหม?',
+  'วันนี้มีอะไรที่ฉันอยากฉลองให้ตัวเอง แม้เป็นเรื่องเล็กๆ?',
+  "สัปดาห์นี้ฉัน 'in' กับอะไร และ 'out' จากอะไร?",
+  'มี intention หนึ่งข้อที่ฉันอยากโฟกัสในปีนี้ และวันนี้ได้ทำตามมันบ้างไหม?',
+  'อะไรทำให้ฉันกลัวหรือกังวล สิ่งนั้นอยู่ในการควบคุมของฉันไหม และถ้าใช่จะรับมืออย่างไร?',
+  'เป้าหมายหลัก 3 ข้อของฉันในช่วงนี้คืออะไร และสำคัญกับฉันเพราะอะไร?',
+  'ฉันจะทำอะไรให้ inner child ของตัวเองบ้าง และจะหาเวลาสำหรับมันได้เมื่อไหร่?',
+  'อีก 3 ปีข้างหน้า อยากให้ตัวเองเป็นแบบไหน และวันนี้จะเริ่มทำอะไรเพื่อไปให้ถึงจุดนั้น?',
+  'วันนี้มีช่วงไหนที่ฉันรู้สึกอยู่กับตรงนั้นจริงๆ ไม่ได้ใจลอยคิดเรื่องอื่นเลย?',
+  'ครั้งล่าสุดที่ฉันหัวเราะจริงๆ หรือทำอะไรสนุกแบบไม่มีเป้าหมายคือตอนไหน?',
+  'วันนี้ฉันเผลอเปรียบเทียบตัวเองกับใครไหม รู้สึกยังไงตอนนั้น?',
+  'วันนี้มีอะไรที่ฉันปฏิเสธหรือบอกไม่ไป แม้จะยากก็ตาม?',
+  'มีเรื่องอะไรที่ฉันยังโทษตัวเองอยู่ ทั้งที่อาจถึงเวลาให้อภัยตัวเองแล้ว?',
+  'ถ้าเพื่อนสนิทมาเล่าปัญหาแบบเดียวกับที่ฉันกำลังเจอ ฉันจะพูดกับเขาว่าอะไร แล้วฉันพูดแบบนั้นกับตัวเองบ้างไหม?',
+  'วันนี้ฉันรู้สึกเหนื่อยล้าหรืออ่อนเพลียไหม ทำไมถึงเป็นแบบนั้น?',
+  'ตอนนี้ร่างกายอยากให้ทำอะไรมากที่สุด ยืดตัว เดินเล่น หรือพักผ่อน — จะให้เวลานั้นกับตัวเองได้เมื่อไหร่?',
+  'มีใครในครอบครัวที่อยากบอกรักหรือขอบคุณเป็นพิเศษวันนี้ อยากบอกว่าอะไร?',
+  'มีเพื่อนคนไหนที่นานๆ ไม่ได้คุยกัน แล้วอยากทักไปหาไหม?',
+  'มีใครที่อยากชมหรือขอบคุณเป็นพิเศษวันนี้ อยากพูดว่าอะไร?',
+  'เวลามีเรื่องขัดแย้งกับคนใกล้ตัว ฉันมักจะหนี สู้ เงียบ หรือยอม? แบบที่ทำอยู่ช่วยหรือทำร้ายความสัมพันธ์มากกว่ากัน?',
+  'มีเรื่องยากในอดีตที่ตอนนี้มองย้อนกลับไปแล้ว รู้สึกว่ามันทำให้ฉันเข้มแข็งหรือเข้าใจอะไรบางอย่างมากขึ้นไหม?',
+];
+
+// ── State ──
+let entries = [];
+let prefs = { quickMode: false, seenWelcome: false, lastExport: null, schema: SCHEMA };
+let sliders = {};
+let tracker = { sleep: false, exercise: false, social: false };
+let answers = ['', '', ''];
+let lastMD = '';
+let activeDate = null;   // วันที่กำลังเขียนอยู่ (null = ยังไม่ init)
+
+function freshSliders() {
+  return {
+    overall: { val: 5, max: 10, label: 'Overall (ทำได้ตามที่คาดหวังไหม)' },
+    energy:  { val: 3, max: 5,  label: 'พลังงาน' },
+    mood:    { val: 3, max: 5,  label: 'อารมณ์' },
+    focus:   { val: 3, max: 5,  label: 'โฟกัส' },
+  };
+}
+sliders = freshSliders();
+
+// ── Helpers ──
+function pickThree(seed) {
+  const idx = []; let s = seed;
+  while (idx.length < 3) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const i = Math.abs(s) % PROMPTS.length;
+    if (!idx.includes(i)) idx.push(i);
+  }
+  return idx.map(i => ({ index: i, text: PROMPTS[i] }));
+}
+function localKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+function todayKey() { return localKey(new Date()); }
+function dayIndex(dstr) {
+  const p = dstr.split('-').map(Number);
+  return Math.floor(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000);
+}
+function promptsForDay(d) { return pickThree(dayIndex(d) * 7919 + 12345); }
+function fmtShort(d) {
+  const p = d.split('-').map(Number);
+  const m = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][p[1]-1];
+  return p[2] + ' ' + m;
+}
+function fmtFull(d) {
+  const p = d.split('-').map(Number);
+  const m = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][p[1]-1];
+  return p[2] + ' ' + m + ' ' + (p[0] + 543);
+}
+function daysBetween(a, b) { return dayIndex(b) - dayIndex(a); }
+function getWeekEntries(weeksAgo) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay() - weeksAgo * 7);
+  start.setHours(0,0,0,0);
+  const end = new Date(start); end.setDate(start.getDate() + 7);
+  const sK = localKey(start), eK = localKey(end);
+  return entries.filter(e => e.date >= sK && e.date < eK);
+}
+function scoreColor(v, max) {
+  const r = v / max;
+  if (r >= 0.7) return '#22c55e';
+  if (r >= 0.5) return '#eab308';
+  return '#ef4444';
+}
+function barColors5(v) { return ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'][Math.max(0, Math.min(4, v - 1))]; }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function getMonths() {
+  const m = {};
+  entries.forEach(e => { const k = e.date.slice(0,7); (m[k] = m[k] || []).push(e); });
+  return m;
+}
+function shiftKey(dateKey, delta) {
+  const p = dateKey.split('-').map(Number);
+  const d = new Date(p[0], p[1]-1, p[2]);
+  d.setDate(d.getDate() + delta);
+  return localKey(d);
+}
+// เขียนไปกี่วันจาก N วันล่าสุด (นับรวมวันนี้)
+function recentCount(days) {
+  const set = new Set(entries.map(e => e.date));
+  let n = 0;
+  for (let i = 0; i < days; i++) if (set.has(shiftKey(todayKey(), -i))) n++;
+  return n;
+}
+function longestStreak() {
+  if (!entries.length) return 0;
+  const idx = entries.map(e => dayIndex(e.date)).sort(function (a,b) { return a-b; });
+  let best = 1, cur = 1;
+  for (let i = 1; i < idx.length; i++) {
+    if (idx[i] === idx[i-1] + 1) cur++;
+    else if (idx[i] !== idx[i-1]) cur = 1;
+    if (cur > best) best = cur;
+  }
+  return best;
+}
+function calcStreak() {
+  if (!entries.length) return 0;
+  const set = new Set(entries.map(e => e.date));
+  const today = todayKey();
+  let cursor = set.has(today) ? dayIndex(today) : dayIndex(today) - 1;
+  if (!set.has(today)) {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    if (!set.has(localKey(y))) return 0;
+  }
+  let n = 0;
+  const idxSet = new Set(entries.map(e => dayIndex(e.date)));
+  while (idxSet.has(cursor)) { n++; cursor--; }
+  return n;
+}
+function generateMD(e) {
+  return '# Journal — ' + fmtFull(e.date) + '\n' +
+'tags: #journal #mental-daily\n' +
+'\n' +
+'## คะแนนวันนี้\n' +
+'- Overall: ' + e.overall + '/10\n' +
+'- พลังงาน: ' + e.energy + '/5\n' +
+'- อารมณ์: ' + e.mood + '/5\n' +
+'- โฟกัส: ' + e.focus + '/5\n' +
+'\n' +
+'## Tracker\n' +
+'- ' + (e.tracker && e.tracker.sleep ? '✓' : '✗') + ' นอนพอ\n' +
+'- ' + (e.tracker && e.tracker.exercise ? '✓' : '✗') + ' ออกกำลังกาย\n' +
+'- ' + (e.tracker && e.tracker.social ? '✓' : '✗') + ' เจอคน\n' +
+'\n' +
+(e.prompts || []).map((p, i) =>
+  '## คำถาม ' + (i+1) + ': ' + (p && p.text ? p.text : '') + '\n' +
+  ((e.answers && e.answers[i]) ? e.answers[i] : '—') + '\n'
+).join('\n') +
+'\n## บันทึกเพิ่มเติม\n' + (e.notes || '—') + '\n' +
+'\n## Intention\n' + (e.intention || '—');
+}
+
+// ── Storage ──
+// ── ทำให้ entry ทุกอันมีรูปร่างเหมือนกัน (กันข้อมูลรุ่นเก่าทำแอปพัง) ──
+function normalizeEntry(e) {
+  if (!e || typeof e !== 'object' || !e.date) return null;
+  const out = {
+    date: String(e.date).slice(0, 10),
+    overall: Number(e.overall) || 5,
+    energy:  Number(e.energy)  || 3,
+    mood:    Number(e.mood)    || 3,
+    focus:   Number(e.focus)   || 3,
+    tracker: {
+      sleep:    !!(e.tracker && e.tracker.sleep),
+      exercise: !!(e.tracker && e.tracker.exercise),
+      social:   !!(e.tracker && e.tracker.social),
+    },
+    prompts: Array.isArray(e.prompts) ? e.prompts.filter(function (p) { return p && p.text; }) : [],
+    answers: Array.isArray(e.answers) ? e.answers.slice(0, 3).map(function (a) { return a == null ? '' : String(a); }) : [],
+    notes: e.notes == null ? '' : String(e.notes),
+    intention: e.intention == null ? '' : String(e.intention),
+    quick: !!e.quick,
+  };
+  while (out.answers.length < 3) out.answers.push('');
+  if (!out.prompts.length) out.prompts = promptsForDay(out.date);
+  return out;
+}
+
+// ── แปลงข้อมูลรุ่นเก่าให้เข้ากับรุ่นใหม่ ──
+function migrate() {
+  const from = Number(prefs.schema) || 1;
+  if (from >= SCHEMA) return;
+  // 1 → 2 : จัดรูปร่าง entry ให้เป็นมาตรฐาน
+  entries = entries.map(normalizeEntry).filter(Boolean);
+  entries.sort(function (a, b) { return a.date.localeCompare(b.date); });
+  prefs.schema = SCHEMA;
+  saveEntries(); savePrefs();
+}
+
+function loadAll() {
+  try { const r = localStorage.getItem(K_ENTRIES); if (r) entries = JSON.parse(r) || []; } catch (err) { entries = []; }
+  try {
+    const p = localStorage.getItem(K_PREFS);
+    if (p) prefs = Object.assign(prefs, JSON.parse(p) || {});
+  } catch (err) {}
+  if (!Array.isArray(entries)) entries = [];
+  migrate();
+  entries = entries.map(normalizeEntry).filter(Boolean);
+}
+function saveEntries() {
+  try {
+    localStorage.setItem(K_ENTRIES, JSON.stringify(entries));
+    return true;
+  } catch (err) {
+    alert('⚠️ บันทึกไม่สำเร็จ — พื้นที่เก็บข้อมูลเต็ม\n\n' +
+          'สิ่งที่ควรทำทันที:\n' +
+          '1. ไปที่ ตั้งค่า → export ทั้งหมด (เก็บไฟล์ไว้ให้ปลอดภัย)\n' +
+          '2. จากนั้นค่อยลบ entries เก่าออก\n\n' +
+          'ข้อความที่เพิ่งเขียนยังอยู่บนหน้าจอ อย่าปิดแอปก่อน export');
+    return false;
+  }
+}
+function dataChars() {
+  try { return (localStorage.getItem(K_ENTRIES) || '').length; } catch (err) { return 0; }
+}
+function storagePct() { return dataChars() / QUOTA_CHARS; }
+
+function savePrefs() {
+  try { localStorage.setItem(K_PREFS, JSON.stringify(prefs)); } catch (err) {}
+}
+
+// ── หน้าคู่มือ (ใช้เป็นหน้าต้อนรับครั้งแรก และเปิดดูซ้ำได้ทุกเมื่อ) ──
+function finishWelcome() {
+  prefs.seenWelcome = true; savePrefs();
+  document.getElementById('welcome').classList.add('hidden');
+}
+function openGuide() {
+  document.getElementById('guide-sub').textContent = 'วิธีใช้ · เวอร์ชัน ' + APP_VERSION;
+  document.getElementById('guide-cta').textContent = 'ปิด';
+  document.getElementById('guide-cta').onclick = closeGuide;
+  document.getElementById('guide-close').classList.remove('hidden');
+  document.getElementById('welcome').classList.remove('hidden');
+  document.getElementById('welcome').scrollTop = 0;
+}
+function closeGuide() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('guide-close').classList.add('hidden');
+  document.getElementById('guide-sub').textContent = 'สมุดบันทึกส่วนตัว';
+  document.getElementById('guide-cta').textContent = 'เริ่มเขียน →';
+  document.getElementById('guide-cta').onclick = finishWelcome;
+}
+
+// ── ข้อมูลเครื่องสำหรับแจ้งปัญหา (ไม่มีเนื้อหา journal อยู่ในนี้) ──
+function copyDiagnostics() {
+  const info = [
+    'Reflect v' + APP_VERSION + ' (' + BUILD_DATE + ')',
+    'schema: ' + SCHEMA,
+    'entries: ' + entries.length,
+    'พื้นที่ใช้: ' + Math.round(dataChars()*2/1024) + ' KB (' + Math.round(storagePct()*100) + '%)',
+    'export ล่าสุด: ' + (prefs.lastExport || 'ยังไม่เคย'),
+    'ติดตั้งหน้าโฮม: ' + (isInstalled() ? 'ใช่' : 'ไม่'),
+    'โหมด: ' + (prefs.quickMode ? 'รีบ' : 'เต็ม'),
+    'หน้าจอ: ' + window.screen.width + 'x' + window.screen.height,
+    'เบราว์เซอร์: ' + navigator.userAgent
+  ].join('\n');
+  navigator.clipboard.writeText(info);
+  flashBtn('copy-diag-btn', '✓ copied', '⎘ copy ข้อมูลเครื่อง');
+}
+
+function openFeedback() {
+  if (!FEEDBACK_URL) return;
+  window.open(FEEDBACK_URL, '_blank', 'noopener');
+}
+function openReview() {
+  if (!REVIEW_URL) return;
+  window.open(REVIEW_URL, '_blank', 'noopener');
+}
+function openReviewResults() {
+  if (!REVIEW_RESULTS_URL) return;
+  window.open(REVIEW_RESULTS_URL, '_blank', 'noopener');
+}
+
+// ── Quick mode ──
+function setQuickMode(on) {
+  prefs.quickMode = !!on; savePrefs();
+  applyQuickMode();
+  renderQuestions();
+}
+function applyQuickMode() {
+  const q = prefs.quickMode;
+  document.getElementById('mode-quick').classList.toggle('active', q);
+  document.getElementById('mode-full').classList.toggle('active', !q);
+  document.getElementById('mode-hint').textContent = q
+    ? '1 คำถาม · ประมาณ 15 วินาที'
+    : '3 คำถาม + บันทึก + intention';
+  document.getElementById('notes-card').classList.toggle('hidden', q);
+  document.getElementById('intention-card').classList.toggle('hidden', q);
+}
+
+// ── Sliders ──
+function renderSlider(key) {
+  const s = sliders[key];
+  const c = key === 'overall' ? scoreColor(s.val, 10) : barColors5(s.val);
+  let html = '<div class="slider-row"><div class="slider-header"><span class="slider-name">' + s.label +
+    '</span><span class="slider-val" style="color:' + c + '">' + s.val + '</span></div><div class="slider-bars">';
+  for (let v = 1; v <= s.max; v++) {
+    const on = v <= s.val;
+    html += '<button class="bar-seg' + (on ? ' active' : '') + '" style="background:' + (on ? c : 'var(--border)') +
+      '" onclick="setSlider(\'' + key + '\',' + v + ')"></button>';
+  }
+  html += '</div></div>';
+  document.getElementById('slider-' + key).innerHTML = html;
+}
+function setSlider(key, val) { sliders[key].val = val; renderSlider(key); }
+function renderAllSliders() { Object.keys(sliders).forEach(renderSlider); }
+
+// ── Tracker ──
+function toggleTracker(key) {
+  tracker[key] = !tracker[key];
+  document.getElementById('tog-' + key).classList.toggle('on', tracker[key]);
+}
+
+// ── Auto-grow textareas (good for dictation) ──
+function autoGrow(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(el.scrollHeight, 80) + 'px';
+}
+function wireGrow(el) {
+  if (!el) return;
+  el.addEventListener('input', function () { autoGrow(el); });
+  autoGrow(el);
+}
+
+// ── Questions ──
+function renderQuestions() {
+  const prompts = promptsForDay(activeDate || todayKey());
+  const count = prefs.quickMode ? 1 : 3;
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += '<div class="card">' +
+      '<span class="lbl">' + (prefs.quickMode ? 'คำถามวันนี้' : 'คำถาม ' + (i+1) + ' / 3') + '</span>' +
+      '<p class="prompt-text">' + esc(prompts[i].text) + '</p>' +
+      '<textarea id="ans-' + i + '" placeholder="เขียนหรือพูดได้เลย..."></textarea>' +
+      (i === 0 ? '<p class="mic-hint">🎙 กดในช่องแล้วใช้ไมค์บนคีย์บอร์ดพูดได้</p>' : '') +
+      '</div>';
+  }
+  document.getElementById('questions-area').innerHTML = html;
+  for (let i = 0; i < count; i++) {
+    const el = document.getElementById('ans-' + i);
+    if (!el) continue;
+    el.value = answers[i] || '';
+    el.addEventListener('input', (function (idx) {
+      return function (ev) { answers[idx] = ev.target.value; autoGrow(ev.target); };
+    })(i));
+    autoGrow(el);
+  }
+  return prompts;
+}
+
+// ═══ เลือกวันที่จะเขียน (เขียนย้อนหลังได้) ═══
+function setActiveDate(dateKey) {
+  // ห้ามเลือกวันในอนาคต
+  if (dayIndex(dateKey) > dayIndex(todayKey())) dateKey = todayKey();
+  saveDraft();                     // เก็บร่างของวันเดิมไว้ก่อนสลับ
+  activeDate = dateKey;
+  loadForDate(dateKey);
+  renderDateUI();
+  renderQuestions();
+  renderAllSliders();
+  // ออกจากหน้า "บันทึกแล้ว" ถ้ากำลังอยู่
+  document.getElementById('tab-submitted').classList.add('hidden');
+  document.getElementById('tab-write').classList.remove('hidden');
+}
+function stepDate(delta) {
+  setActiveDate(shiftKey(activeDate, delta));
+}
+function onDatePick(v) {
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) { renderDateUI(); return; }
+  setActiveDate(v);
+}
+
+// โหลดข้อมูลของวันนั้นเข้าฟอร์ม: entry ที่บันทึกแล้ว > ร่าง > ค่าเริ่มต้น
+function loadForDate(dateKey) {
+  const saved = entries.find(function (e) { return e.date === dateKey; });
+  sliders = freshSliders();
+  tracker = { sleep:false, exercise:false, social:false };
+  answers = ['','',''];
+  let notes = '', intention = '';
+
+  if (saved) {
+    sliders.overall.val = saved.overall; sliders.energy.val = saved.energy;
+    sliders.mood.val = saved.mood;       sliders.focus.val = saved.focus;
+    tracker = Object.assign({}, saved.tracker);
+    answers = saved.answers.slice(0,3);
+    notes = saved.notes; intention = saved.intention;
+  } else {
+    const d = getDraftFor(dateKey);
+    if (d) {
+      if (d.overall) sliders.overall.val = d.overall;
+      if (d.energy)  sliders.energy.val  = d.energy;
+      if (d.mood)    sliders.mood.val    = d.mood;
+      if (d.focus)   sliders.focus.val   = d.focus;
+      if (d.tracker) tracker = Object.assign(tracker, d.tracker);
+      if (d.answers) answers = d.answers.slice(0,3);
+      notes = d.notes || ''; intention = d.intention || '';
+    }
+  }
+  while (answers.length < 3) answers.push('');
+
+  ['sleep','exercise','social'].forEach(function (k) {
+    const b = document.getElementById('tog-' + k);
+    if (b) b.classList.toggle('on', !!tracker[k]);
+  });
+  const n = document.getElementById('notes-input');
+  const i = document.getElementById('intention-input');
+  if (n) { n.value = notes; autoGrow(n); }
+  if (i) { i.value = intention; autoGrow(i); }
+}
+
+function renderDateUI() {
+  const inp = document.getElementById('date-input');
+  const st  = document.getElementById('date-status');
+  const nxt = document.getElementById('date-next');
+  if (!inp) return;
+  inp.value = activeDate;
+  inp.max = todayKey();
+  const diff = daysBetween(activeDate, todayKey());
+  if (nxt) nxt.disabled = diff <= 0;
+
+  const saved = entries.find(function (e) { return e.date === activeDate; });
+  let label;
+  if (diff === 0) label = 'วันนี้ · ' + fmtFull(activeDate);
+  else if (diff === 1) label = 'เมื่อวาน · ' + fmtFull(activeDate);
+  else label = diff + ' วันก่อน · ' + fmtFull(activeDate);
+
+  st.textContent = label + (saved ? ' · ✓ มีบันทึกแล้ว (แก้ได้)' : ' · ยังไม่มีบันทึก');
+
+  // ป้ายกำกับเปลี่ยนตามวันที่เลือก ไม่ให้อ่านผิดเวลาเขียนย้อนหลัง
+  const isToday = diff === 0;
+  const dayTxt = isToday ? 'วันนี้' : fmtShort(activeDate);
+  const l1 = document.getElementById('lbl-scores');
+  const l2 = document.getElementById('lbl-tracker');
+  const l3 = document.getElementById('lbl-intention');
+  if (l1) l1.textContent = 'คะแนน' + dayTxt;
+  if (l2) l2.textContent = dayTxt;
+  if (l3) l3.textContent = isToday
+    ? 'Intention — อยากทำหรือเป็นอะไรในวันนี้หรือพรุ่งนี้'
+    : 'Intention — สิ่งที่ตั้งใจไว้ของวันนั้น';
+  st.className = 'date-status' + (diff > 0 ? ' past' : '');
+  document.getElementById('today-notice-card').classList.toggle('hidden', !(saved && diff === 0));
+}
+
+// ── Submit ──
+function handleSubmit() {
+  const target = activeDate || todayKey();
+  const entry = {
+    date: target,
+    overall: sliders.overall.val,
+    energy: sliders.energy.val,
+    mood: sliders.mood.val,
+    focus: sliders.focus.val,
+    tracker: Object.assign({}, tracker),
+    prompts: promptsForDay(target),
+    answers: answers.slice(0, 3),
+    notes: (document.getElementById('notes-input') || {}).value || '',
+    intention: (document.getElementById('intention-input') || {}).value || '',
+    quick: !!prefs.quickMode,
+  };
+  entries = entries.filter(e => e.date !== target);
+  entries.push(entry);
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  saveEntries();
+  clearDraft(target);
+  lastMD = generateMD(entry);
+  document.getElementById('md-output').textContent = lastMD;
+  const st = calcStreak();
+  const diff = daysBetween(target, todayKey());
+  const parts = [];
+  parts.push(diff === 0 ? 'บันทึกของวันนี้' : 'บันทึกย้อนหลังของ ' + fmtShort(target));
+  if (st > 1) parts.push('ต่อเนื่อง ' + st + ' วัน 🔥');
+  document.getElementById('submit-streak').textContent = parts.join(' · ');
+  document.getElementById('tab-write').classList.add('hidden');
+  document.getElementById('tab-submitted').classList.remove('hidden');
+  window.scrollTo(0, 0);
+  updateHeader();
+}
+function showWrite() {
+  document.getElementById('tab-submitted').classList.add('hidden');
+  document.getElementById('tab-write').classList.remove('hidden');
+  setActiveDate(todayKey());
+  updateHeader();
+}
+
+// ── Copy ──
+function flashBtn(id, done, back) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.textContent = done; b.classList.add('copied');
+  setTimeout(function () { b.textContent = back; b.classList.remove('copied'); }, 2000);
+}
+function copyMD() {
+  navigator.clipboard.writeText(lastMD);
+  flashBtn('copy-md-btn', '✓ copied', '⎘ copy markdown');
+}
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('ai-prompt-text').textContent.trim());
+  flashBtn('copy-prompt-btn', '✓ copied', '⎘ copy prompt');
+}
+
+// ── แจ้งเตือน: ยังไม่ export นาน / พื้นที่ใกล้เต็ม ──
+function renderAlerts() {
+  const card = document.getElementById('alert-card');
+  const txt  = document.getElementById('alert-text');
+  const btn  = document.getElementById('alert-action');
+  const msgs = [];
+  let action = { label: 'ไปหน้า export →', fn: function () { switchTab('settings'); } };
+
+  // ── สำคัญที่สุด: มีสิ่งที่เขียนค้างไว้วันอื่นที่ยังไม่ได้กดบันทึก ──
+  const orphanDate = findOrphanDraftDate();
+  if (orphanDate) {
+    msgs.push('✍️ <strong>มีสิ่งที่เขียนค้างไว้เมื่อ ' + fmtShort(orphanDate) + ' ยังไม่ได้กดบันทึก</strong><br>' +
+      'แตะปุ่มด้านล่างเพื่อไปเขียนต่อและกดบันทึกให้เรียบร้อย ก่อนที่จะลืมหรือสลับหน้าไปทำอย่างอื่น');
+    action = { label: '📝 ไปเขียนต่อ ' + fmtShort(orphanDate) + ' →', fn: function () { setActiveDate(orphanDate); } };
+  }
+
+  const pct = storagePct();
+  if (pct >= QUOTA_WARN) {
+    msgs.push('📦 <strong>พื้นที่เก็บข้อมูลใช้ไปแล้ว ' + Math.round(pct*100) + '%</strong><br>' +
+      'export เก็บไฟล์ไว้ แล้วลบ entries เก่าออกได้ ข้อมูลในไฟล์จะยังครบ');
+  }
+
+  if (entries.length >= 7) {
+    const days = prefs.lastExport ? daysBetween(prefs.lastExport, todayKey()) : 9999;
+    if (days >= EXPORT_REMIND_DAYS) {
+      msgs.push('💾 <strong>' + (prefs.lastExport ? 'ไม่ได้ export มา ' + days + ' วันแล้ว' : 'ยังไม่เคย export เลย') + '</strong><br>' +
+        'ข้อมูลอยู่ในเครื่องนี้เท่านั้น — ถ้าเครื่องหายหรือล้างประวัติเบราว์เซอร์ จะกู้คืนไม่ได้');
+    }
+  }
+
+  if (!msgs.length) { card.classList.add('hidden'); return; }
+  txt.innerHTML = msgs.join('<hr style="border:none;border-top:1px solid rgba(234,179,8,0.2);margin:12px 0">');
+  if (btn) { btn.textContent = action.label; btn.onclick = action.fn; }
+  card.classList.remove('hidden');
+}
+
+// ── Header + throwback ──
+function updateHeader() {
+  document.getElementById('entry-count').textContent = '◈ ' + entries.length + ' entries';
+  const el = document.getElementById('days-since');
+  const sl = document.getElementById('streak-line');
+
+  if (!entries.length) {
+    el.textContent = 'ยังไม่มีบันทึก'; el.className = 'ok'; sl.textContent = '';
+  } else {
+    const last = entries[entries.length-1];
+    const gap = daysBetween(last.date, todayKey());
+    const st = calcStreak();
+
+    // บรรทัดบน: สถานะวันนี้ (ไม่ใช้สีแดงเตือน — ให้ข้อมูลแทนการกดดัน)
+    if (gap === 0) { el.textContent = '✓ เขียนแล้ววันนี้'; el.className = 'ok'; }
+    else if (gap === 1) { el.textContent = 'เขียนล่าสุดเมื่อวาน'; el.className = 'ok'; }
+    else { el.textContent = 'เขียนล่าสุด ' + gap + ' วันก่อน'; el.className = 'ok'; }
+
+    // บรรทัดล่าง: streak ถ้ามี ไม่งั้นโชว์ความสม่ำเสมอ 14 วัน (ไม่เคยเป็น 0 เปล่าๆ)
+    if (st >= 2) {
+      sl.textContent = '🔥 ' + st + ' วันติด';
+      sl.style.color = 'var(--orange)';
+    } else {
+      const win = Math.min(14, Math.max(7, daysBetween(entries[0].date, todayKey()) + 1));
+      sl.textContent = '◇ เขียน ' + recentCount(win) + '/' + win + ' วันล่าสุด';
+      sl.style.color = 'var(--dim)';
+    }
+  }
+
+  renderThrowback();
+  renderAlerts();
+}
+
+function renderThrowback() {
+  const card = document.getElementById('throwback-card');
+  const candidates = [];
+  const tIdx = dayIndex(todayKey());
+  [[365,'ปีที่แล้ววันนี้'],[180,'6 เดือนก่อน'],[90,'3 เดือนก่อน'],[30,'30 วันก่อน'],[7,'สัปดาห์ก่อน']].forEach(function (pair) {
+    const target = tIdx - pair[0];
+    const hit = entries.find(e => dayIndex(e.date) === target);
+    if (hit) candidates.push({ when: pair[1], e: hit });
+  });
+  if (!candidates.length) { card.classList.add('hidden'); return; }
+  const pick = candidates[0];
+  const texts = (pick.e.answers || []).filter(function (a) { return a && a.trim(); });
+  const body = texts.length ? texts[0] : (pick.e.notes || pick.e.intention || '');
+  if (!body) { card.classList.add('hidden'); return; }
+  document.getElementById('tb-when').textContent = '◷ ' + pick.when + ' · ' + fmtShort(pick.e.date) + ' · overall ' + pick.e.overall + '/10';
+  document.getElementById('tb-text').textContent = body.length > 260 ? body.slice(0, 260) + '…' : body;
+  card.classList.remove('hidden');
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
+  ['write','chart','history','settings'].forEach(function (id) {
+    const el = document.getElementById('tab-' + id);
+    if (el) el.classList.toggle('hidden', id !== tab);
+  });
+  document.getElementById('tab-submitted').classList.add('hidden');
+  window.scrollTo(0, 0);
+  if (tab === 'chart') renderChart();
+  if (tab === 'history') renderHistory();
+  if (tab === 'settings') renderSettings();
+}
+
+// ═══ สรุปรายสัปดาห์ — คำนวณในเครื่องทั้งหมด ไม่ส่งข้อมูลออกไปไหน ═══
+function avgOf(list, key) {
+  if (!list.length) return null;
+  return list.reduce(function (t, e) { return t + (e[key] != null ? e[key] : 0); }, 0) / list.length;
+}
+
+function weeklyInsights() {
+  const out = [];
+  const thisW = getWeekEntries(0);
+  const lastW = getWeekEntries(1);
+
+  // 1) เขียนไปกี่วัน
+  out.push({ ico: '✍', html: 'สัปดาห์นี้เขียนไป <b>' + thisW.length + ' วัน</b>' +
+    (lastW.length ? ' (สัปดาห์ก่อน ' + lastW.length + ' วัน)' : '') });
+
+  if (!thisW.length) {
+    return { list: out, note: 'ยังไม่มีบันทึกในสัปดาห์นี้ — เขียนวันนี้แล้วกลับมาดูได้เลย' };
+  }
+
+  // 2) คะแนนเฉลี่ย + เทียบสัปดาห์ก่อน (ต้องมีอย่างน้อย 3 วันทั้งสองสัปดาห์)
+  const aT = avgOf(thisW, 'overall');
+  out.push({ ico: '◈', html: 'Overall เฉลี่ย <b>' + aT.toFixed(1) + '/10</b>' });
+  if (thisW.length >= 3 && lastW.length >= 3) {
+    const aL = avgOf(lastW, 'overall');
+    const d = aT - aL;
+    if (Math.abs(d) >= 0.5) {
+      out.push({ ico: d > 0 ? '↑' : '↓', html: 'เทียบสัปดาห์ก่อน <span class="' + (d > 0 ? 'up' : 'down') + '">' +
+        (d > 0 ? '+' : '') + d.toFixed(1) + '</span> (สัปดาห์ก่อน ' + aL.toFixed(1) + ')' });
+    } else {
+      out.push({ ico: '=', html: 'ใกล้เคียงสัปดาห์ก่อน (' + aL.toFixed(1) + ')' });
+    }
+  }
+
+  // 3) วันที่ดีสุด / ต่ำสุดในสัปดาห์ (ต้องมี >= 3 วัน)
+  if (thisW.length >= 3) {
+    const sorted = thisW.slice().sort(function (a,b) { return b.overall - a.overall; });
+    const hi = sorted[0], lo = sorted[sorted.length-1];
+    if (hi.overall !== lo.overall) {
+      out.push({ ico: '▲', html: 'วันที่ดีสุด <b>' + fmtShort(hi.date) + '</b> (' + hi.overall + '/10) · ' +
+        'ต่ำสุด <b>' + fmtShort(lo.date) + '</b> (' + lo.overall + '/10)' });
+    }
+  }
+
+  // 4) tracker: เทียบวันที่ทำ vs ไม่ทำ (ใช้ข้อมูลทั้งหมด ต้องมีฝั่งละ >= 4 วัน)
+  [['exercise','🏃','วันที่ออกกำลังกาย'], ['sleep','😴','วันที่นอนพอ'], ['social','👥','วันที่ได้เจอคน']]
+  .forEach(function (r) {
+    const yes = entries.filter(function (e) { return e.tracker && e.tracker[r[0]]; });
+    const no  = entries.filter(function (e) { return !(e.tracker && e.tracker[r[0]]); });
+    if (yes.length >= 4 && no.length >= 4) {
+      const d = avgOf(yes,'overall') - avgOf(no,'overall');
+      if (Math.abs(d) >= 0.8) {
+        out.push({ ico: r[1], html: r[2] + ' overall เฉลี่ย<span class="' + (d>0?'up':'down') + '"> ' +
+          (d>0?'สูงกว่า ':'ต่ำกว่า ') + Math.abs(d).toFixed(1) + '</span> วันที่ไม่ได้ทำ ' +
+          '<span style="color:var(--dim);font-size:11px">(' + yes.length + ' vs ' + no.length + ' วัน)</span>' });
+      }
+    }
+  });
+
+  // 5) pattern รายวันของสัปดาห์ (ต้องมี >= 21 วัน ไม่งั้นเป็นแค่เสียงรบกวน)
+  if (entries.length >= 21) {
+    const dow = [[],[],[],[],[],[],[]];
+    entries.forEach(function (e) {
+      const pp = e.date.split('-').map(Number);
+      dow[new Date(pp[0], pp[1]-1, pp[2]).getDay()].push(e.overall);
+    });
+    const names = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
+    let lo = null;
+    dow.forEach(function (arr, i) {
+      if (arr.length < 3) return;
+      const a = arr.reduce(function (x,y) { return x+y; },0)/arr.length;
+      if (!lo || a < lo.a) lo = { a: a, i: i, n: arr.length };
+    });
+    const all = avgOf(entries, 'overall');
+    if (lo && all - lo.a >= 0.8) {
+      out.push({ ico: '📅', html: 'วัน<b>' + names[lo.i] + '</b>คะแนนเฉลี่ยต่ำกว่าปกติ (' + lo.a.toFixed(1) +
+        ' เทียบค่าเฉลี่ยรวม ' + all.toFixed(1) + ')' });
+    }
+  }
+
+  // note ตามปริมาณข้อมูล
+  let note;
+  if (entries.length < 14) {
+    note = 'ตัวเลขพวกนี้คำนวณจากบันทึก ' + entries.length + ' วัน — ยังน้อยเกินจะสรุปอะไรได้ ยิ่งเขียนมากยิ่งเห็น pattern ชัดขึ้น';
+  } else {
+    note = 'ตัวเลขทั้งหมดคำนวณในเครื่องนี้ ไม่ส่งข้อมูลออกไปไหน · เป็นแค่สิ่งที่นับได้จากที่จด ไม่ใช่ข้อสรุปเรื่องตัวคุณ';
+  }
+  return { list: out, note: note };
+}
+
+function renderInsights() {
+  const r = weeklyInsights();
+  document.getElementById('insight-body').innerHTML = r.list.map(function (x) {
+    return '<div class="insight"><span class="ico">' + x.ico + '</span><span>' + x.html + '</span></div>';
+  }).join('');
+  document.getElementById('insight-note').textContent = r.note;
+}
+
+// ── Chart ──
+function renderChart() {
+  renderInsights();
+
+  // Calendar 30 days
+  const set = new Set(entries.map(e => e.date));
+  let cal = '<div class="cal-grid">';
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    const k = localKey(d);
+    const has = set.has(k);
+    const e = has ? entries.find(x => x.date === k) : null;
+    const bg = has ? scoreColor(e.overall != null ? e.overall : 5, 10) : 'var(--border)';
+    cal += '<div class="cal-cell' + (has ? ' has' : '') + '" style="background:' + bg + '" title="' + k + '"></div>';
+  }
+  cal += '</div>';
+  document.getElementById('calendar-grid').innerHTML = cal;
+  const written = Array.from(set).filter(function (k) { return daysBetween(k, todayKey()) < 30 && daysBetween(k, todayKey()) >= 0; }).length;
+  document.getElementById('calendar-sub').textContent = 'เขียน ' + written + ' จาก 30 วัน · ช่องสว่าง = วันที่เขียน';
+
+  // Bar chart
+  const data = entries.slice(-14);
+  let html = '';
+  if (!data.length) html = '<p class="empty">ยังไม่มีข้อมูล</p>';
+  else {
+    html = '<div class="bar-chart">';
+    data.forEach(function (e) {
+      const v = e.overall != null ? e.overall : 5;
+      html += '<div class="bar-wrap"><div class="bar-fill" style="height:' + Math.round((v/10)*52) + 'px;background:' +
+        scoreColor(v,10) + '"></div><span class="bar-label">' + Number(e.date.slice(8,10)) + '</span></div>';
+    });
+    html += '</div><p class="chart-sub">คะแนน overall 14 วันล่าสุด</p>';
+  }
+  document.getElementById('mini-bar-chart').innerHTML = html;
+
+  // Tracker week
+  const w = getWeekEntries(0);
+  let t = '';
+  if (!w.length) t = '<p class="empty">ยังไม่มีข้อมูลสัปดาห์นี้</p>';
+  else {
+    t = '<div class="tracker-boxes">';
+    [['sleep','😴','นอนพอ'],['exercise','🏃','ออกกำลัง'],['social','👥','เจอคน']].forEach(function (r) {
+      const c = w.filter(function (e) { return e.tracker && e.tracker[r[0]]; }).length;
+      const col = c === w.length ? 'var(--green)' : c > 0 ? 'var(--yellow)' : 'var(--muted)';
+      t += '<div class="tracker-box"><div class="icon">' + r[1] + '</div><div class="num" style="color:' + col + '">' +
+        c + '/' + w.length + '</div><div class="name">' + r[2] + '</div></div>';
+    });
+    t += '</div>';
+  }
+  document.getElementById('tracker-week').innerHTML = t;
+
+  // Monthly
+  const months = getMonths();
+  const keys = Object.keys(months).sort().reverse().slice(0, 6);
+  const mc = document.getElementById('monthly-avg-card');
+  if (!keys.length) { mc.classList.add('hidden'); return; }
+  mc.classList.remove('hidden');
+  let m = '';
+  keys.forEach(function (k) {
+    const es = months[k];
+    const avg = es.reduce(function (s,e) { return s + (e.overall != null ? e.overall : 5); }, 0) / es.length;
+    const c = avg >= 7 ? 'var(--green)' : avg >= 5 ? 'var(--yellow)' : 'var(--red)';
+    m += '<div class="month-row"><span class="month-key">' + k + '</span><div class="month-bar-bg"><div class="month-bar-fill" style="width:' +
+      (avg/10*100) + '%;background:' + c + '"></div></div><span class="month-val" style="color:' + c + '">' + avg.toFixed(1) + '</span></div>';
+  });
+  document.getElementById('monthly-avg').innerHTML = m;
+}
+
+// ── History + search ──
+function entryText(e) {
+  return [(e.answers || []).join(' '), e.notes || '', e.intention || '',
+    (e.prompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' ')].join(' ').toLowerCase();
+}
+function highlight(text, q) {
+  const safe = esc(text);
+  if (!q) return safe;
+  try {
+    const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return safe.replace(re, '<mark>$1</mark>');
+  } catch (err) { return safe; }
+}
+function renderHistory() {
+  const qEl = document.getElementById('search-input');
+  const q = (qEl ? qEl.value : '').trim();
+  const ql = q.toLowerCase();
+  const list = q ? entries.filter(function (e) { return entryText(e).indexOf(ql) !== -1; }) : entries;
+
+  document.getElementById('history-count').textContent = q
+    ? 'พบ ' + list.length + ' จาก ' + entries.length + ' entries'
+    : entries.length + ' entries';
+
+  if (!entries.length) {
+    document.getElementById('history-list').innerHTML = '<p class="empty">ยังไม่มีข้อมูล<br>เริ่มเขียนวันนี้ได้เลย</p>';
+    return;
+  }
+  if (!list.length) {
+    document.getElementById('history-list').innerHTML = '<p class="empty">ไม่พบคำว่า "' + esc(q) + '"</p>';
+    return;
+  }
+
+  let html = '';
+  list.slice().reverse().forEach(function (e) {
+    const ov = e.overall != null ? e.overall : 5;
+    const c = scoreColor(ov, 10);
+    const icons = (e.tracker && e.tracker.sleep ? '😴' : '') + (e.tracker && e.tracker.exercise ? '🏃' : '') + (e.tracker && e.tracker.social ? '👥' : '');
+    let qh = '';
+    (e.prompts || []).forEach(function (p, pi) {
+      const a = (e.answers && e.answers[pi]) ? e.answers[pi] : '';
+      if (!a && pi > 0) return;
+      qh += '<p class="entry-q">' + highlight(p && p.text ? p.text : '', q) + '</p>' +
+            '<p class="entry-a">' + (a ? highlight(a, q) : '—') + '</p>';
+    });
+    let extra = '';
+    if (e.notes) extra += '<div class="entry-section"><p class="entry-section-label">NOTES</p><p class="entry-a">' + highlight(e.notes, q) + '</p></div>';
+    if (e.intention) extra += '<div class="entry-section"><p class="entry-section-label">INTENTION</p><p class="entry-a" style="color:var(--accentL)">' + highlight(e.intention, q) + '</p></div>';
+    html += '<details' + (q ? ' open' : '') + ' data-date="' + e.date + '">' +
+      '<summary><div><div class="entry-date">' + fmtShort(e.date) + (e.quick ? ' ⚡' : '') + '</div>' +
+      '<div class="entry-scores"><span class="entry-score">⚡' + e.energy + '</span>' +
+      '<span class="entry-score">♥' + e.mood + '</span><span class="entry-score">◈' + e.focus + '</span>' +
+      '<span style="font-size:11px">' + icons + '</span></div></div>' +
+      '<span class="entry-overall" style="color:' + c + '">' + ov + '<span>/10</span></span></summary>' +
+      '<div class="entry-body">' + qh + extra +
+      '<div class="mt-12 entry-actions">' +
+      '<button class="btn-small accent" onclick="editEntry(\'' + e.date + '\')">✎ แก้ไข</button>' +
+      '<button class="btn-copy" onclick="copyEntryByDate(this,\'' + e.date + '\')">⎘ copy markdown</button>' +
+      '<button class="btn-small danger" onclick="deleteEntry(\'' + e.date + '\')">🗑 ลบ</button>' +
+      '</div></div></details>';
+  });
+  document.getElementById('history-list').innerHTML = html;
+}
+function editEntry(date) {
+  switchTab('write');
+  setActiveDate(date);
+  window.scrollTo(0, 0);
+}
+function deleteEntry(date) {
+  const e = entries.find(function (x) { return x.date === date; });
+  if (!e) return;
+  if (!window.confirm('ลบบันทึกของ ' + fmtFull(date) + '?\n\nลบแล้วกู้คืนไม่ได้ (นอกจากมีไฟล์ backup)')) return;
+  entries = entries.filter(function (x) { return x.date !== date; });
+  saveEntries();
+  renderHistory(); updateHeader(); renderSettings();
+  if (activeDate === date) loadForDate(date), renderDateUI(), renderQuestions(), renderAllSliders();
+}
+
+function copyEntryByDate(btn, date) {
+  const e = entries.find(function (x) { return x.date === date; });
+  if (!e) return;
+  navigator.clipboard.writeText(generateMD(e));
+  btn.textContent = '✓ copied'; btn.classList.add('copied');
+  setTimeout(function () { btn.textContent = '⎘ copy markdown'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ── Settings ──
+function renderSettings() {
+  const avg = entries.length ? (entries.reduce(function (s,e) { return s + (e.overall != null ? e.overall : 5); }, 0) / entries.length).toFixed(1) : '–';
+  const st = calcStreak();
+  document.getElementById('stats-boxes').innerHTML =
+    '<div class="stat-box"><div class="stat-val">' + entries.length + '</div><div class="stat-label">วันที่เขียน</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + st + '</div><div class="stat-label">ติดกันตอนนี้</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + longestStreak() + '</div><div class="stat-label">ติดกันมากสุด</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + avg + '</div><div class="stat-label">Avg overall</div></div>';
+
+  const prompts = promptsForDay(todayKey());
+  let qh = '';
+  prompts.forEach(function (p, i) { qh += '<p class="q-item"><span class="q-num">' + (i+1) + '. </span>' + esc(p.text) + '</p>'; });
+  document.getElementById('settings-questions').innerHTML = qh;
+  document.getElementById('settings-note').textContent = 'คำถามเปลี่ยนทุกวัน · สัปดาห์นี้เขียนไป ' + getWeekEntries(0).length + ' วัน';
+
+  const note = document.getElementById('last-export-note');
+  const pct = Math.round(storagePct() * 100);
+  const kb = Math.round(dataChars() * 2 / 1024);
+  note.innerHTML =
+    (prefs.lastExport ? 'export ครั้งล่าสุด: ' + prefs.lastExport + ' (' + daysBetween(prefs.lastExport, todayKey()) + ' วันก่อน)' : 'ยังไม่เคย export') +
+    '<br>พื้นที่ที่ใช้: ' + kb + ' KB · ' + (pct < 1 ? 'น้อยกว่า 1' : pct) + '% ของที่มี';
+
+  renderInstallStatus();
+  renderFeedback();
+  renderReview();
+
+  const vi = document.getElementById('version-info');
+  if (vi) {
+    vi.innerHTML =
+      'เวอร์ชัน <strong style="color:var(--accentL)">' + APP_VERSION + '</strong> · อัปเดต ' + BUILD_DATE +
+      '<br>โครงสร้างข้อมูล schema ' + SCHEMA +
+      '<br>' + (navigator.onLine ? '🟢 ออนไลน์ — ได้เวอร์ชันใหม่สุดแล้ว' : '🔵 ออฟไลน์ — ใช้สำเนาในเครื่อง') +
+      '<br><span style="color:var(--dim)">สร้างโดย สิรวิชญ์ นำเบญจพล · นศพ. ปี 1 ม.นเรศวร</span>';
+  }
+}
+
+function renderFeedback() {
+  const txt = document.getElementById('feedback-text');
+  const act = document.getElementById('feedback-actions');
+  const note = document.getElementById('feedback-note');
+  if (!txt || !act) return;
+
+  if (FEEDBACK_URL) {
+    txt.innerHTML = 'เจอบั๊ก อยากได้ฟีเจอร์อะไร — บอกได้เลย <strong>อ่านคนเดียวเท่านั้น ไม่มีใครอื่นเห็น</strong>';
+    act.innerHTML =
+      '<button class="btn-small accent" onclick="openFeedback()">🐛 แจ้งปัญหา/ฟีดแบ็ก</button>' +
+      '<button class="btn-copy" id="copy-diag-btn" onclick="copyDiagnostics()">⎘ copy ข้อมูลเครื่อง</button>';
+    note.innerHTML = 'ถ้าแจ้งบั๊ก กด "copy ข้อมูลเครื่อง" แล้ววางลงในฟอร์มด้วย จะช่วยหาสาเหตุได้เร็วขึ้น<br>' +
+      '🔒 ข้อมูลเครื่องมีแค่เวอร์ชันแอปกับรุ่นเบราว์เซอร์ <strong>ไม่มีเนื้อหา journal</strong> อยู่ในนั้นเลย';
+  } else {
+    txt.innerHTML = '<span style="color:var(--dim)">ยังไม่ได้ตั้งค่าช่องทางนี้</span>';
+    act.innerHTML = '<button class="btn-copy" id="copy-diag-btn" onclick="copyDiagnostics()">⎘ copy ข้อมูลเครื่อง</button>';
+    note.textContent = 'ตั้งค่าได้ที่ตัวแปร FEEDBACK_URL ในไฟล์ index.html';
+  }
+}
+
+function renderReview() {
+  const txt = document.getElementById('review-text');
+  const act = document.getElementById('review-actions');
+  const note = document.getElementById('review-note');
+  if (!txt || !act) return;
+
+  const hasWrite = !!REVIEW_URL;
+  const hasRead = !!REVIEW_RESULTS_URL;
+
+  if (!hasWrite && !hasRead) {
+    txt.innerHTML = '<span style="color:var(--dim)">ยังไม่ได้ตั้งค่าช่องทางนี้</span>';
+    act.innerHTML = '';
+    note.textContent = 'ตั้งค่าได้ที่ตัวแปร REVIEW_URL และ REVIEW_RESULTS_URL ในไฟล์ index.html';
+    return;
+  }
+
+  txt.innerHTML = 'อยากรู้ว่าคนอื่นใช้แล้วเป็นยังไงบ้างไหม หรืออยากเล่าประสบการณ์ตัวเอง — คำตอบในนี้เปิดให้คนที่ตอบด้วยกันเห็นได้';
+
+  let html = '';
+  if (hasRead) html += '<button class="btn-small accent" onclick="openReviewResults()">📖 ดูรีวิวจากคนอื่น</button>';
+  if (hasWrite) html += '<button class="btn-small" onclick="openReview()">✍️ เขียนรีวิว</button>';
+  act.innerHTML = html;
+
+  note.innerHTML = '🔓 ต่างจากช่องแจ้งปัญหาด้านล่าง — รีวิวตรงนี้<strong>เปิดให้ทุกคนอ่านได้</strong> อย่าใส่ข้อมูลส่วนตัวหรือสิ่งที่ไม่อยากให้คนอื่นเห็น';
+}
+
+// ── Export / Import — เก็บทุกอย่าง ──
+function handleExport() {
+  const payload = {
+    app: 'reflect',
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    entries: entries,
+    prefs: prefs,
+    drafts: loadAllDrafts()   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reflect-backup-' + todayKey() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+  prefs.lastExport = todayKey(); savePrefs();
+  renderSettings();
+}
+
+function handleImport(evt) {
+  const file = evt.target.files && evt.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = function (ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const incoming = Array.isArray(data) ? data : (data.entries || []);
+      if (!Array.isArray(incoming)) throw new Error('bad format');
+
+      let added = 0, updated = 0;
+      const byDate = {};
+      entries.forEach(function (e) { byDate[e.date] = e; });
+      incoming.forEach(function (ie) {
+        if (!ie || !ie.date) return;
+        if (!byDate[ie.date]) { byDate[ie.date] = ie; added++; }
+        else {
+          // เก็บอันที่มีเนื้อหามากกว่าไว้
+          const oldLen = entryText(byDate[ie.date]).trim().length;
+          const newLen = entryText(ie).trim().length;
+          if (newLen > oldLen) { byDate[ie.date] = ie; updated++; }
+        }
+      });
+      entries = Object.keys(byDate).sort().map(function (k) { return byDate[k]; });
+      saveEntries();
+
+      // restore prefs (ถ้ามี) — ไม่ทับ seenWelcome ที่เป็น true อยู่แล้ว
+      if (data.prefs && typeof data.prefs === 'object') {
+        const keep = prefs.seenWelcome;
+        prefs = Object.assign(prefs, data.prefs);
+        prefs.seenWelcome = keep || prefs.seenWelcome;
+        savePrefs();
+        applyQuickMode();
+      }
+      // restore drafts — รองรับทั้งไฟล์ใหม่ (drafts: {...}) และไฟล์เก่า (draft: {...} ตัวเดียว)
+      const incomingDrafts = {};
+      if (data.drafts && typeof data.drafts === 'object') {
+        Object.keys(data.drafts).forEach(function (dt) { incomingDrafts[dt] = data.drafts[dt]; });
+      } else if (data.draft && data.draft.date) {
+        incomingDrafts[data.draft.date] = data.draft;
+      }
+      if (Object.keys(incomingDrafts).length) {
+        const localDrafts = loadAllDrafts();
+        Object.keys(incomingDrafts).forEach(function (dt) {
+          // ถ้าวันนั้นบันทึกเป็น entry แล้ว ไม่ต้องเก็บร่างซ้ำ
+          if (byDate[dt]) return;
+          const inc = incomingDrafts[dt];
+          const cur = localDrafts[dt];
+          const incLen = ((inc.answers || []).join('') + (inc.notes || '') + (inc.intention || '')).trim().length;
+          const curLen = cur ? ((cur.answers || []).join('') + (cur.notes || '') + (cur.intention || '')).trim().length : -1;
+          if (incLen > curLen) localDrafts[dt] = inc;   // เก็บอันที่เนื้อหายาวกว่า กันทับของใหม่กว่าด้วยของเก่า
+        });
+        saveAllDrafts(localDrafts);
+      }
+
+      alert('นำเข้าสำเร็จ\nเพิ่มใหม่ ' + added + ' วัน' + (updated ? '\nอัปเดต ' + updated + ' วัน' : '') + '\nรวมทั้งหมด ' + entries.length + ' entries');
+      updateHeader(); renderAllSliders(); renderQuestions(); renderSettings();
+    } catch (err) {
+      alert('ไม่สามารถอ่านไฟล์ได้ — ตรวจว่าเป็นไฟล์ .json ที่ export จาก Reflect');
+    }
+    evt.target.value = '';
+  };
+  r.readAsText(file);
+}
+
+function handleDeleteAll() {
+  if (!window.confirm('ลบ entries ทั้งหมด ' + entries.length + ' รายการ?\nกู้คืนไม่ได้ — แนะนำ export ก่อน')) return;
+  if (!window.confirm('ยืนยันอีกครั้ง: ลบทั้งหมดจริงๆ ใช่ไหม?')) return;
+  entries = []; saveEntries(); saveAllDrafts({});
+  sliders = freshSliders(); tracker = {sleep:false,exercise:false,social:false}; answers = ['','',''];
+  renderAllSliders(); renderQuestions(); updateHeader(); renderSettings();
+}
+
+// ── Draft — เก็บแยกตามวันที่ ไม่ใช้ช่องเดียวรวมกันทุกวัน ──
+// (บั๊กเดิม: ช่องร่างมีอันเดียว พอเปิดแอปข้ามวัน autosave จะเขียนทับร่างของเมื่อวานทิ้งใน 2 วินาที)
+function loadAllDrafts() {
+  try {
+    const raw = localStorage.getItem(K_DRAFTS);
+    const obj = raw ? JSON.parse(raw) : {};
+    return (obj && typeof obj === 'object') ? obj : {};
+  } catch (err) { return {}; }
+}
+function saveAllDrafts(obj) {
+  try { localStorage.setItem(K_DRAFTS, JSON.stringify(obj)); } catch (err) {}
+}
+// ย้ายร่างรูปแบบเก่า (ช่องเดียว) เข้าระบบใหม่ครั้งเดียวตอนเปิดแอป — กันร่างที่ค้างอยู่ของคนอื่นหายไปเฉยๆ
+function migrateOldDraft() {
+  try {
+    const raw = localStorage.getItem(K_DRAFT);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d && d.date) {
+      const drafts = loadAllDrafts();
+      if (!drafts[d.date]) drafts[d.date] = d;   // ไม่ทับถ้ามีร่างวันนั้นอยู่แล้วในระบบใหม่
+      saveAllDrafts(drafts);
+    }
+    localStorage.removeItem(K_DRAFT);
+  } catch (err) {}
+}
+// ลบร่างที่ค้างนานเกินไป (กันพื้นที่บวมและกันร่างเก่าเกะกะ)
+function pruneOldDrafts() {
+  const drafts = loadAllDrafts();
+  let changed = false;
+  Object.keys(drafts).forEach(function (dt) {
+    if (daysBetween(dt, todayKey()) > DRAFT_MAX_AGE_DAYS) { delete drafts[dt]; changed = true; }
+  });
+  if (changed) saveAllDrafts(drafts);
+}
+function saveDraft() {
+  if (!activeDate) return;
+  if (document.getElementById('tab-write').classList.contains('hidden')) return;
+  // ไม่ต้องเก็บร่างถ้าวันนั้นบันทึกไว้แล้ว (แก้ตรง entry ได้เลย)
+  if (entries.some(function (e) { return e.date === activeDate; })) return;
+  const draft = {
+    date: activeDate,
+    overall: sliders.overall.val, energy: sliders.energy.val,
+    mood: sliders.mood.val, focus: sliders.focus.val,
+    tracker: Object.assign({}, tracker),
+    answers: answers.slice(0, 3),
+    notes: (document.getElementById('notes-input') || {}).value || '',
+    intention: (document.getElementById('intention-input') || {}).value || '',
+  };
+  // ถ้าไม่มีอะไรเขียนเลย ไม่ต้องสร้างร่างเปล่าทิ้งไว้
+  const hasContent = draft.answers.some(function (a) { return a && a.trim(); }) || draft.notes.trim() || draft.intention.trim();
+  const drafts = loadAllDrafts();
+  if (hasContent) {
+    drafts[activeDate] = draft;
+    saveAllDrafts(drafts);
+  } else if (drafts[activeDate]) {
+    // อย่าเขียนทับร่างเดิมที่มีเนื้อหาด้วยค่าว่างเปล่า (นี่คือจุดที่บั๊กเดิมเกิด)
+    // ถ้าฟอร์มว่างแต่มีร่างเก่าค้างอยู่ ปล่อยร่างเดิมไว้เฉยๆ ไม่ต้องแตะ
+  }
+}
+// คืนร่างของวันที่ dateKey ถ้ามี (ไม่ลบทิ้ง — ใช้ตอนโหลดฟอร์ม)
+function getDraftFor(dateKey) {
+  const drafts = loadAllDrafts();
+  return drafts[dateKey] || null;
+}
+function clearDraft(dateKey) {
+  const drafts = loadAllDrafts();
+  if (dateKey) { delete drafts[dateKey]; }
+  else { return; }
+  saveAllDrafts(drafts);
+}
+// มีร่างค้างของวันอื่น (ไม่ใช่วันนี้) ที่ยังไม่ได้บันทึกเป็น entry ไหม — ใช้เตือนผู้ใช้
+function findOrphanDraftDate() {
+  const drafts = loadAllDrafts();
+  const savedDates = new Set(entries.map(function (e) { return e.date; }));
+  const keys = Object.keys(drafts).filter(function (dt) {
+    if (dt === todayKey()) return false;
+    if (savedDates.has(dt)) return false;
+    const d = drafts[dt];
+    const has = d && (
+      (d.answers || []).some(function (a) { return a && a.trim(); }) ||
+      (d.notes && d.notes.trim()) || (d.intention && d.intention.trim())
+    );
+    return has;
+  }).sort();
+  return keys.length ? keys[keys.length - 1] : null;  // เอาอันล่าสุด
+}
+
+// ── ปุ่มติดตั้ง (Android/Chrome รองรับ, iOS ต้องทำมือ) ──
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredInstall = e;
+  const w = document.getElementById('install-btn-wrap');
+  if (w) w.classList.remove('hidden');
+});
+function promptInstall() {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(function () {
+    deferredInstall = null;
+    const w = document.getElementById('install-btn-wrap');
+    if (w) w.classList.add('hidden');
+  }).catch(function () {});
+}
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+function renderInstallStatus() {
+  const el = document.getElementById('install-status');
+  if (!el) return;
+  el.textContent = isInstalled()
+    ? '✓ ติดตั้งแล้ว — กำลังเปิดจากหน้าโฮม'
+    : 'ยังไม่ได้ติดตั้ง — กำลังเปิดผ่านเบราว์เซอร์';
+}
+
+// ── บังคับตรวจหาเวอร์ชันใหม่ ──
+function forceRefresh() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      if (reg) reg.update().catch(function () {});
+    }).catch(function () {});
+  }
+  setTimeout(function () { location.reload(); }, 400);
+}
+
+// ── Service worker: อัปเดตทันทีเมื่อมีเน็ต + ใช้ได้ตอนออฟไลน์ ──
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('./sw.js').then(function (reg) {
+    // เช็คหาเวอร์ชันใหม่ทุกครั้งที่กลับมาเปิดแอป
+    reg.update().catch(function () {});
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) reg.update().catch(function () {});
+    });
+  }).catch(function () {});
+}
+
+// ── Init ──
+document.querySelectorAll('.tab-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () { switchTab(btn.dataset.tab); });
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && !document.getElementById('guide-close').classList.contains('hidden')) closeGuide();
+});
+
+loadAll();
+document.getElementById('version-line').textContent = 'v' + APP_VERSION + ' · daily journal';
+migrateOldDraft();
+pruneOldDrafts();
+activeDate = todayKey();
+applyQuickMode();
+wireGrow(document.getElementById('notes-input'));
+wireGrow(document.getElementById('intention-input'));
+loadForDate(activeDate);
+renderAllSliders();
+renderQuestions();
+renderDateUI();
+updateHeader();
+registerSW();
+
+// ถ้าเปิดแอปข้ามวัน ให้เด้งกลับมาเป็นวันปัจจุบันเอง
+setInterval(function () {
+  if (activeDate && daysBetween(activeDate, todayKey()) < 0) setActiveDate(todayKey());
+}, 60000);
+
+document.getElementById('loading').classList.add('hidden');
+document.getElementById('app').classList.remove('hidden');
+if (!prefs.seenWelcome && entries.length === 0) {
+  document.getElementById('welcome').classList.remove('hidden');
+}
+
+setInterval(saveDraft, 2000);
+window.addEventListener('beforeunload', saveDraft);
+</script>
+</body>
+</html>
