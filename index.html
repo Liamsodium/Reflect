@@ -578,8 +578,8 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '7.4';
-const BUILD_DATE  = '8 ส.ค. 69';
+const APP_VERSION = '7.6';
+const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
 // │  ใส่ลิงก์ Google Form ของคุณตรงนี้ (แก้ที่เดียวจบ)         │
@@ -648,6 +648,25 @@ const PROMPTS = [
   'มีเรื่องยากในอดีตที่ตอนนี้มองย้อนกลับไปแล้ว รู้สึกว่ามันทำให้ฉันเข้มแข็งหรือเข้าใจอะไรบางอย่างมากขึ้นไหม?',
 ];
 
+// คลังคำถามโหมดรีบ — สั้น ตอบได้ไม่กี่วินาที แยกจาก PROMPTS หลักตั้งใจ
+const QUICK_PROMPTS = [
+  'วันนี้ให้คะแนนตัวเองกี่เต็ม 10?',
+  'คำเดียวที่บรรยายวันนี้ได้ที่สุดคืออะไร?',
+  'วันนี้มีเรื่องเดียวที่อยากจำไว้ คืออะไร?',
+  'พรุ่งนี้อยากให้ตัวเองทำแค่ 1 อย่าง คืออะไร?',
+  'วันนี้เหนื่อยไหม แล้วพรุ่งนี้อยากพักตรงไหนบ้าง?',
+  'มีอะไรวันนี้ที่ทำให้ยิ้มได้ แม้แว๊บเดียว?',
+  'วันนี้เครียดระดับไหน (1-5) เพราะอะไร?',
+  'วันนี้นอนพอไหม?',
+  'ข้อความสั้นๆ ถึงตัวเองพรุ่งนี้เช้า คืออะไร?',
+  'วันนี้ขอบคุณอะไรที่สุด แค่ 1 อย่าง?',
+  'ตอนนี้รู้สึกยังไง ในหนึ่งคำ?',
+  'มีใครที่อยากขอบคุณวันนี้ไหม สั้นๆ พอ?',
+  'วันนี้กินอะไรที่ทำให้มีแรงสู้ต่อบ้าง?',
+  'วันนี้ยากไหม? ทำไม (สั้นๆ)?',
+];
+
+
 // ── State ──
 let entries = [];
 let prefs = { quickMode: false, seenWelcome: false, lastExport: null, schema: SCHEMA };
@@ -689,6 +708,16 @@ function dayIndex(dstr) {
   return Math.floor(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000);
 }
 function promptsForDay(d) { return pickThree(dayIndex(d) * 7919 + 12345); }
+function quickPromptForDay(d) {
+  let s = dayIndex(d) * 2654435761 + 998244353;
+  s = (s * 1664525 + 1013904223) & 0xffffffff;
+  const i = Math.abs(s) % QUICK_PROMPTS.length;
+  return { index: i, text: QUICK_PROMPTS[i], quick: true };
+}
+// ใช้จุดเดียวทั้งตอนแสดงคำถามและตอนบันทึก กันคำถามที่โชว์กับที่เก็บไม่ตรงกัน
+function activePromptsForDay(d) {
+  return prefs.quickMode ? [quickPromptForDay(d)] : promptsForDay(d);
+}
 function fmtShort(d) {
   const p = d.split('-').map(Number);
   const m = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][p[1]-1];
@@ -961,7 +990,7 @@ function wireGrow(el) {
 
 // ── Questions ──
 function renderQuestions() {
-  const prompts = promptsForDay(activeDate || todayKey());
+  const prompts = activePromptsForDay(activeDate || todayKey());
   const count = prefs.quickMode ? 1 : 3;
   let html = '';
   for (let i = 0; i < count; i++) {
@@ -1088,8 +1117,8 @@ function handleSubmit() {
     mood: sliders.mood.val,
     focus: sliders.focus.val,
     tracker: Object.assign({}, tracker),
-    prompts: promptsForDay(target),
-    answers: answers.slice(0, 3),
+    prompts: activePromptsForDay(target),
+    answers: prefs.quickMode ? answers.slice(0, 1) : answers.slice(0, 3),
     notes: (document.getElementById('notes-input') || {}).value || '',
     intention: (document.getElementById('intention-input') || {}).value || '',
     quick: !!prefs.quickMode,
