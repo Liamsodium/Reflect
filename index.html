@@ -115,7 +115,10 @@
     /* Calendar */
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .cal-cell { aspect-ratio: 1; border-radius: 5px; background: var(--border); opacity: 0.35; }
-    .cal-cell.has { opacity: 1; }
+    .cal-cell.has { opacity: 1; cursor: pointer; transition: transform 0.1s ease; }
+    .cal-cell.has:active { transform: scale(0.82); }
+    .bar-wrap.clickable { cursor: pointer; }
+    .bar-wrap.clickable:active .bar-fill { opacity: 0.5; }
     .cal-dow { font-size: 9px; color: var(--dim); text-align: center; font-family: 'DM Mono', monospace; }
 
     /* Tracker boxes */
@@ -220,6 +223,11 @@
 <div id="loading">loading...</div>
 
 <!-- WELCOME (first run only) -->
+<div id="month-review" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;padding:max(30px, env(safe-area-inset-top)) 24px calc(30px + env(safe-area-inset-bottom));">
+  <button class="guide-close" onclick="closeMonthReview()">✕</button>
+  <div id="month-review-body"></div>
+</div>
+
 <div id="welcome" class="hidden">
   <button id="guide-close" class="guide-close hidden" onclick="closeGuide()" aria-label="ปิด">✕</button>
   <div class="w-inner">
@@ -578,7 +586,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '7.6';
+const APP_VERSION = '7.8';
 const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -650,7 +658,7 @@ const PROMPTS = [
 
 // คลังคำถามโหมดรีบ — สั้น ตอบได้ไม่กี่วินาที แยกจาก PROMPTS หลักตั้งใจ
 const QUICK_PROMPTS = [
-  'วันนี้ให้คะแนนตัวเองกี่เต็ม 10? เพราะอะไร?',
+  'วันนี้ให้คะแนนตัวเองกี่เต็ม 10?',
   'คำเดียวที่บรรยายวันนี้ได้ที่สุดคืออะไร?',
   'วันนี้มีเรื่องเดียวที่อยากจำไว้ คืออะไร?',
   'พรุ่งนี้อยากให้ตัวเองทำแค่ 1 อย่าง คืออะไร?',
@@ -1015,6 +1023,11 @@ function renderQuestions() {
 }
 
 // ═══ เลือกวันที่จะเขียน (เขียนย้อนหลังได้) ═══
+// เรียกจากกราฟ (ช่องปฏิทิน/แท่งกราฟ) — พาไปหน้าเขียนของวันนั้นทันที
+function goToDate(dateKey) {
+  switchTab('write');
+  setActiveDate(dateKey);
+}
 function setActiveDate(dateKey) {
   // ห้ามเลือกวันในอนาคต
   if (dayIndex(dateKey) > dayIndex(todayKey())) dateKey = todayKey();
@@ -1377,7 +1390,8 @@ function renderChart() {
     const has = set.has(k);
     const e = has ? entries.find(x => x.date === k) : null;
     const bg = has ? scoreColor(e.overall != null ? e.overall : 5, 10) : 'var(--border)';
-    cal += '<div class="cal-cell' + (has ? ' has' : '') + '" style="background:' + bg + '" title="' + k + '"></div>';
+    const clickAttr = has ? ' onclick="goToDate(\'' + k + '\')"' : '';
+    cal += '<div class="cal-cell' + (has ? ' has' : '') + '" style="background:' + bg + '" title="' + k + '"' + clickAttr + '></div>';
   }
   cal += '</div>';
   document.getElementById('calendar-grid').innerHTML = cal;
@@ -1392,7 +1406,7 @@ function renderChart() {
     html = '<div class="bar-chart">';
     data.forEach(function (e) {
       const v = e.overall != null ? e.overall : 5;
-      html += '<div class="bar-wrap"><div class="bar-fill" style="height:' + Math.round((v/10)*52) + 'px;background:' +
+      html += '<div class="bar-wrap clickable" onclick="goToDate(\'' + e.date + '\')"><div class="bar-fill" style="height:' + Math.round((v/10)*52) + 'px;background:' +
         scoreColor(v,10) + '"></div><span class="bar-label">' + Number(e.date.slice(8,10)) + '</span></div>';
     });
     html += '</div><p class="chart-sub">คะแนน overall 14 วันล่าสุด</p>';
@@ -1426,10 +1440,78 @@ function renderChart() {
     const es = months[k];
     const avg = es.reduce(function (s,e) { return s + (e.overall != null ? e.overall : 5); }, 0) / es.length;
     const c = avg >= 7 ? 'var(--green)' : avg >= 5 ? 'var(--yellow)' : 'var(--red)';
-    m += '<div class="month-row"><span class="month-key">' + k + '</span><div class="month-bar-bg"><div class="month-bar-fill" style="width:' +
+    m += '<div class="month-row" style="cursor:pointer" onclick="openMonthReview(\'' + k + '\')"><span class="month-key">' + k + '</span><div class="month-bar-bg"><div class="month-bar-fill" style="width:' +
       (avg/10*100) + '%;background:' + c + '"></div></div><span class="month-val" style="color:' + c + '">' + avg.toFixed(1) + '</span></div>';
   });
   document.getElementById('monthly-avg').innerHTML = m;
+}
+
+// ── Monthly Review — สรุปเจาะลึกของเดือนที่แตะเลือก ──
+function openMonthReview(monthKey) {
+  const es = (getMonths()[monthKey] || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  if (!es.length) return;
+
+  // จำนวนวันในเดือนนั้น (ถ้าเป็นเดือนปัจจุบัน นับถึงวันนี้ ไม่นับล่วงหน้า)
+  const parts = monthKey.split('-').map(Number);
+  const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
+  const isCurrentMonth = monthKey === todayKey().slice(0, 7);
+  const totalDays = isCurrentMonth ? Number(todayKey().slice(8, 10)) : daysInMonth;
+
+  // ไล่หา streak ยาวสุดภายในเดือนนี้ (นับเฉพาะวันติดกันจริง)
+  let longest = 0, cur = 0, prevDate = null;
+  es.forEach(function (e) {
+    cur = (prevDate && daysBetween(prevDate, e.date) === 1) ? cur + 1 : 1;
+    longest = Math.max(longest, cur);
+    prevDate = e.date;
+  });
+
+  // หาวันดีที่สุด/หนักที่สุดจากคะแนน overall
+  let best = es[0], worst = es[0];
+  es.forEach(function (e) {
+    const v = e.overall != null ? e.overall : 5;
+    if (v > (best.overall != null ? best.overall : 5)) best = e;
+    if (v < (worst.overall != null ? worst.overall : 5)) worst = e;
+  });
+
+  const avg = es.reduce(function (s, e) { return s + (e.overall != null ? e.overall : 5); }, 0) / es.length;
+
+  const habit = { sleep: 0, exercise: 0, social: 0 };
+  es.forEach(function (e) {
+    if (!e.tracker) return;
+    if (e.tracker.sleep) habit.sleep++;
+    if (e.tracker.exercise) habit.exercise++;
+    if (e.tracker.social) habit.social++;
+  });
+
+  const monthNames = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const title = monthNames[parts[1]] + ' ' + (parts[0] + 543);
+
+  let html = '<h2 style="font-size:22px;margin-bottom:4px">' + title + '</h2>' +
+    '<p style="color:var(--dim);font-size:13px;margin-bottom:20px">คะแนนเฉลี่ย <strong style="color:var(--accentL)">' + avg.toFixed(1) + '</strong>/10 จาก ' + es.length + ' บันทึก</p>' +
+
+    '<div class="card"><span class="lbl">ความสม่ำเสมอ</span>' +
+    '<p style="margin-top:8px;font-size:14px">เขียน ' + es.length + ' จาก ' + totalDays + ' วัน · ติดต่อกันยาวสุด ' + longest + ' วัน</p></div>' +
+
+    '<div class="card" style="cursor:pointer" onclick="goToDate(\'' + best.date + '\'); closeMonthReview();">' +
+    '<span class="lbl">🌟 วันที่ดีที่สุด</span>' +
+    '<p style="margin-top:8px;font-size:14px">' + fmtFull(best.date) + ' — ' + (best.overall != null ? best.overall : 5) + '/10 · แตะเพื่อเปิดอ่าน</p></div>' +
+
+    '<div class="card" style="cursor:pointer" onclick="goToDate(\'' + worst.date + '\'); closeMonthReview();">' +
+    '<span class="lbl">🌧 วันที่หนักที่สุด</span>' +
+    '<p style="margin-top:8px;font-size:14px">' + fmtFull(worst.date) + ' — ' + (worst.overall != null ? worst.overall : 5) + '/10 · แตะเพื่อเปิดอ่าน</p></div>' +
+
+    '<div class="card"><span class="lbl">Tracker เดือนนี้</span><div class="tracker-boxes" style="margin-top:10px">' +
+    '<div class="tracker-box"><div class="icon">😴</div><div class="num">' + habit.sleep + '/' + es.length + '</div><div class="name">นอนพอ</div></div>' +
+    '<div class="tracker-box"><div class="icon">🏃</div><div class="num">' + habit.exercise + '/' + es.length + '</div><div class="name">ออกกำลัง</div></div>' +
+    '<div class="tracker-box"><div class="icon">👥</div><div class="num">' + habit.social + '/' + es.length + '</div><div class="name">เจอคน</div></div>' +
+    '</div></div>';
+
+  document.getElementById('month-review-body').innerHTML = html;
+  document.getElementById('month-review').classList.remove('hidden');
+}
+function closeMonthReview() {
+  document.getElementById('month-review').classList.add('hidden');
 }
 
 // ── History + search ──
