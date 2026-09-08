@@ -307,7 +307,10 @@
       <button class="tab-btn active" data-tab="write">✍ เขียน</button>
       <button class="tab-btn" data-tab="chart">📊 กราฟ</button>
       <button class="tab-btn" data-tab="history">◷ ย้อนหลัง</button>
+      <button class="tab-btn" data-tab="extra">📝 เสริม</button>
       <button class="tab-btn" data-tab="settings">⚙ ตั้งค่า</button>
+      <button class="tab-btn" data-tab="tips">💡 Tips</button>
+      <button class="tab-btn" data-tab="feedback">💬 Feedback &amp; Share</button>
     </div>
   </div>
 
@@ -466,56 +469,6 @@
       </div>
 
       <div class="card">
-        <span class="lbl">Tips</span>
-        <ul class="tip-list">
-          <li><strong>วันที่ไม่มีแรง ใช้โหมดรีบ</strong><br>เขียนสั้นๆ ยังดีกว่าข้ามไปเลย — การไม่ขาดวันสำคัญกว่าความยาว</li>
-          <li><strong>พูดแทนพิมพ์</strong><br>กดในช่องเขียนแล้วใช้ไมค์บนคีย์บอร์ด เร็วกว่าพิมพ์ 3–4 เท่า และมักได้ความรู้สึกจริงกว่า</li>
-          <li><strong>เขียนเวลาเดิมทุกวัน</strong><br>ผูกไว้กับสิ่งที่ทำอยู่แล้ว เช่น หลังแปรงฟัน หรือก่อนวางมือถือนอน จะกลายเป็นนิสัยเร็วขึ้น</li>
-          <li><strong>ลืมเขียนเมื่อวาน? ย้อนได้</strong><br>ในหน้าเขียน กดปุ่ม ‹ หรือเลือกวันที่ด้านบน เขียนย้อนหลังได้ทุกวัน — พลาดวันไม่ได้แปลว่าต้องเลิก</li>
-          <li><strong>ไม่ต้องตอบให้ครบทุกคำถาม</strong><br>ข้อไหนไม่มีอะไรจะเขียน เว้นไว้ได้ ไม่ต้องฝืนหาเรื่องมาเขียน</li>
-          <li><strong>ใช้ช่องค้นหาในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียว เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
-          <li><strong>Export ทุกสิ้นเดือน</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
-          <li><strong>อ่านย้อนหลังบ้าง ไม่ใช่แค่เขียน</strong><br>เปิดดู 1 เดือนก่อนแล้วเทียบกับวันนี้ จะเห็นสิ่งที่ตอนอยู่ในนั้นมองไม่เห็น</li>
-        </ul>
-        <div class="mt-14">
-          <button class="btn-small accent" onclick="openGuide()">📖 เปิดคู่มือเริ่มต้น</button>
-        </div>
-      </div>
-
-      <div class="card" id="review-card">
-        <span class="lbl">รีวิวจากผู้ใช้ (สาธารณะ)</span>
-        <p class="settings-text" id="review-text"></p>
-        <div class="settings-row" id="review-actions"></div>
-        <p class="settings-note" id="review-note"></p>
-      </div>
-
-      <div class="card" id="feedback-card">
-        <span class="lbl">แจ้งปัญหา / ฟีดแบ็กถึงผู้พัฒนา</span>
-        <p class="settings-text" id="feedback-text"></p>
-        <div class="settings-row" id="feedback-actions"></div>
-        <p class="settings-note" id="feedback-note"></p>
-      </div>
-
-      <div class="card">
-        <span class="lbl">ใช้ AI ช่วยวิเคราะห์ (ไม่บังคับ)</span>
-        <p class="settings-text">แอปนี้ไม่มี AI ในตัว เพราะคุณภาพจะสู้การคุยกับ AI ตัวเต็มไม่ได้ ถ้าอยากได้บทวิเคราะห์ ทำแบบนี้:</p>
-        <div class="info-box">
-          <strong style="color:var(--text)">1.</strong> กด "export ทั้งหมด" ด้านบน<br>
-          <strong style="color:var(--text)">2.</strong> เปิด AI ที่ใช้อยู่ (Claude / ChatGPT / Gemini)<br>
-          <strong style="color:var(--text)">3.</strong> วาง prompt ข้างล่าง แล้วแนบไฟล์ .json<br>
-          <strong style="color:var(--text)">4.</strong> ถามต่อได้เรื่อยๆ — ตรงนี้คือส่วนที่มีค่าที่สุด
-        </div>
-        <p class="settings-text mt-14" style="margin-bottom:8px">Prompt แนะนำ:</p>
-        <div class="prompt-box" id="ai-prompt-text">นี่คือ journal ของฉัน ช่วยดูว่ามี pattern อะไรเด่นบ้าง มีอะไรที่ควรระวัง แล้วให้กำลังใจแบบตรงไปตรงมา ไม่ต้องชมเกินจริง ถ้าเห็นอะไรที่ฉันอาจไม่ทันสังเกตเกี่ยวกับตัวเอง บอกได้เลย</div>
-        <div class="mt-12">
-          <button class="btn-copy" id="copy-prompt-btn" onclick="copyPrompt()">⎘ copy prompt</button>
-        </div>
-        <div class="warn-box mt-14">
-          🔒 การวาง journal ในแชท AI = ส่งข้อมูลออกจากเครื่องไปให้บริษัทอื่น อ่านสิ่งที่จะแชร์ก่อนตัดสินใจทุกครั้ง ถ้ามีเรื่องที่ไม่อยากให้ใครเห็น ลบส่วนนั้นออกก่อน
-        </div>
-      </div>
-
-      <div class="card">
         <span class="lbl">สถิติ</span>
         <div class="stat-boxes" id="stats-boxes"></div>
       </div>
@@ -572,6 +525,82 @@
 
     </div>
 
+    <div id="tab-extra" class="anim hidden">
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:18px">พื้นที่แยกสำหรับเขียนยาวๆ ที่ไม่ผูกกับวันไหนโดยเฉพาะ — เขียนในแอปโน้ตที่ถนัดอยู่แล้ว (เช่น Apple Notes) แล้ว copy มาวางตรงนี้ก็ได้ ไม่กระทบ streak หรือกราฟใดๆ ในแอปเลย และไปด้วยกันทุกครั้งที่กด export</p>
+      <div id="extra-notes-form" class="hidden mt-14">
+        <input type="text" id="extra-note-label" class="search-box" style="margin-bottom:10px" placeholder="ป้ายกำกับ (ไม่บังคับ) เช่น '3 วันก่อน' หรือ 'หลังสอบเคมี'" />
+        <textarea id="extra-note-text" placeholder="วางหรือพิมพ์เรื่องที่อยากเก็บไว้..."></textarea>
+        <div class="settings-row mt-14">
+          <button class="btn-small accent" onclick="saveExtraNote()">บันทึก</button>
+          <button class="btn-small" onclick="toggleExtraNoteForm(false)">ยกเลิก</button>
+        </div>
+      </div>
+      <button class="btn-small accent mt-14" id="extra-note-add-btn" onclick="toggleExtraNoteForm(true)">+ เพิ่มบันทึกเสริม</button>
+      <div id="extra-notes-list" class="mt-14"></div>
+    </div>
+
+    <div id="tab-tips" class="anim hidden">
+      <div class="card">
+        <span class="lbl">Tips</span>
+        <ul class="tip-list">
+          <li><strong>วันที่ไม่มีแรง ใช้โหมดรีบ</strong><br>เขียนสั้นๆ ยังดีกว่าข้ามไปเลย — การไม่ขาดวันสำคัญกว่าความยาว</li>
+          <li><strong>พูดแทนพิมพ์</strong><br>กดในช่องเขียนแล้วใช้ไมค์บนคีย์บอร์ด เร็วกว่าพิมพ์ 3–4 เท่า และมักได้ความรู้สึกจริงกว่า</li>
+          <li><strong>เขียนเวลาเดิมทุกวัน</strong><br>ผูกไว้กับสิ่งที่ทำอยู่แล้ว เช่น หลังแปรงฟัน หรือก่อนวางมือถือนอน จะกลายเป็นนิสัยเร็วขึ้น</li>
+          <li><strong>ลืมเขียนเมื่อวาน? ย้อนได้</strong><br>ในหน้าเขียน กดปุ่ม ‹ หรือเลือกวันที่ด้านบน เขียนย้อนหลังได้ทุกวัน — พลาดวันไม่ได้แปลว่าต้องเลิก</li>
+          <li><strong>ไม่ต้องตอบให้ครบทุกคำถาม</strong><br>ข้อไหนไม่มีอะไรจะเขียน เว้นไว้ได้ ไม่ต้องฝืนหาเรื่องมาเขียน</li>
+          <li><strong>ใช้ช่องค้นหาในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียว เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
+          <li><strong>Export ทุกสิ้นเดือน</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
+          <li><strong>อ่านย้อนหลังบ้าง ไม่ใช่แค่เขียน</strong><br>เปิดดู 1 เดือนก่อนแล้วเทียบกับวันนี้ จะเห็นสิ่งที่ตอนอยู่ในนั้นมองไม่เห็น</li>
+        </ul>
+        <div class="mt-14">
+          <button class="btn-small accent" onclick="openGuide()">📖 เปิดคู่มือเริ่มต้น</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="lbl">ใช้ AI ช่วยวิเคราะห์ (ไม่บังคับ)</span>
+        <p class="settings-text">แอปนี้ไม่มี AI ในตัว เพราะคุณภาพจะสู้การคุยกับ AI ตัวเต็มไม่ได้ ถ้าอยากได้บทวิเคราะห์ ทำแบบนี้:</p>
+        <div class="info-box">
+          <strong style="color:var(--text)">1.</strong> กด "export ทั้งหมด" ในแท็บตั้งค่า<br>
+          <strong style="color:var(--text)">2.</strong> เปิด AI ที่ใช้อยู่ (Claude / ChatGPT / Gemini)<br>
+          <strong style="color:var(--text)">3.</strong> วาง prompt ข้างล่าง แล้วแนบไฟล์ .json<br>
+          <strong style="color:var(--text)">4.</strong> ถามต่อได้เรื่อยๆ — ตรงนี้คือส่วนที่มีค่าที่สุด
+        </div>
+        <p class="settings-text mt-14" style="margin-bottom:8px">Prompt แนะนำ:</p>
+        <div class="prompt-box" id="ai-prompt-text">นี่คือ journal ของฉัน ช่วยดูว่ามี pattern อะไรเด่นบ้าง มีอะไรที่ควรระวัง แล้วให้กำลังใจแบบตรงไปตรงมา ไม่ต้องชมเกินจริง ถ้าเห็นอะไรที่ฉันอาจไม่ทันสังเกตเกี่ยวกับตัวเอง บอกได้เลย</div>
+        <div class="mt-12">
+          <button class="btn-copy" id="copy-prompt-btn" onclick="copyPrompt()">⎘ copy prompt</button>
+        </div>
+        <div class="warn-box mt-14">
+          🔒 การวาง journal ในแชท AI = ส่งข้อมูลออกจากเครื่องไปให้บริษัทอื่น อ่านสิ่งที่จะแชร์ก่อนตัดสินใจทุกครั้ง ถ้ามีเรื่องที่ไม่อยากให้ใครเห็น ลบส่วนนั้นออกก่อน
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-feedback" class="anim hidden">
+      <div class="card" id="review-card">
+        <span class="lbl">รีวิวจากผู้ใช้ (สาธารณะ)</span>
+        <p class="settings-text" id="review-text"></p>
+        <div class="settings-row" id="review-actions"></div>
+        <p class="settings-note" id="review-note"></p>
+      </div>
+
+      <div class="card" id="feedback-card">
+        <span class="lbl">แจ้งปัญหา / ฟีดแบ็กถึงผู้พัฒนา</span>
+        <p class="settings-text" id="feedback-text"></p>
+        <div class="settings-row" id="feedback-actions"></div>
+        <p class="settings-note" id="feedback-note"></p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">ชวนเพื่อนใช้</span>
+        <p class="settings-text mt-14" style="margin-bottom:0">ส่งลิงก์แนะนำแอปให้เพื่อน อธิบายว่า Reflect คืออะไรก่อนเปิดใช้จริง</p>
+        <div class="mt-14">
+          <button class="btn-small accent" onclick="shareApp()">📤 แชร์ให้เพื่อน</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -586,7 +615,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '7.8';
+const APP_VERSION = '8.4';
 const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -1268,15 +1297,17 @@ function renderThrowback() {
 // ── Tabs ──
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
-  ['write','chart','history','settings'].forEach(function (id) {
+  ['write','chart','history','settings','extra','tips','feedback'].forEach(function (id) {
     const el = document.getElementById('tab-' + id);
     if (el) el.classList.toggle('hidden', id !== tab);
   });
   document.getElementById('tab-submitted').classList.add('hidden');
   window.scrollTo(0, 0);
   if (tab === 'chart') renderChart();
+  if (tab === 'extra') renderExtraNotes();
   if (tab === 'history') renderHistory();
   if (tab === 'settings') renderSettings();
+  if (tab === 'feedback') { renderReview(); renderFeedback(); }
 }
 
 // ═══ สรุปรายสัปดาห์ — คำนวณในเครื่องทั้งหมด ไม่ส่งข้อมูลออกไปไหน ═══
@@ -1345,16 +1376,34 @@ function weeklyInsights() {
       dow[new Date(pp[0], pp[1]-1, pp[2]).getDay()].push(e.overall);
     });
     const names = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
-    let lo = null;
+    let lo = null, hi = null;
     dow.forEach(function (arr, i) {
       if (arr.length < 3) return;
       const a = arr.reduce(function (x,y) { return x+y; },0)/arr.length;
       if (!lo || a < lo.a) lo = { a: a, i: i, n: arr.length };
+      if (!hi || a > hi.a) hi = { a: a, i: i, n: arr.length };
     });
     const all = avgOf(entries, 'overall');
     if (lo && all - lo.a >= 0.8) {
       out.push({ ico: '📅', html: 'วัน<b>' + names[lo.i] + '</b>คะแนนเฉลี่ยต่ำกว่าปกติ (' + lo.a.toFixed(1) +
         ' เทียบค่าเฉลี่ยรวม ' + all.toFixed(1) + ')' });
+    }
+    // วันที่ดีที่สุดในสัปดาห์ (ใช้ dow ชุดเดียวกันที่คำนวณไว้แล้ว ไม่คำนวณซ้ำ)
+    if (hi && hi.a - all >= 0.8 && (!lo || hi.i !== lo.i)) {
+      out.push({ ico: '🌤', html: 'วัน<b>' + names[hi.i] + '</b>คะแนนเฉลี่ยสูงกว่าปกติ (' + hi.a.toFixed(1) +
+        ' เทียบค่าเฉลี่ยรวม ' + all.toFixed(1) + ')' });
+    }
+  }
+
+  // 6) ทำครบทุก habit วันเดียวกันไหม เทียบกับวันที่ไม่ได้ทำเลยสักอย่าง
+  const allYes = entries.filter(function (e) { return e.tracker && e.tracker.sleep && e.tracker.exercise && e.tracker.social; });
+  const allNo  = entries.filter(function (e) { return !e.tracker || (!e.tracker.sleep && !e.tracker.exercise && !e.tracker.social); });
+  if (allYes.length >= 4 && allNo.length >= 4) {
+    const d = avgOf(allYes,'overall') - avgOf(allNo,'overall');
+    if (Math.abs(d) >= 0.8) {
+      out.push({ ico: '✨', html: 'วันที่ทำครบ <b>ทั้ง 3 อย่าง</b> (นอนพอ+ออกกำลังกาย+เจอคน) overall เฉลี่ย<span class="' + (d>0?'up':'down') + '"> ' +
+        (d>0?'สูงกว่า ':'ต่ำกว่า ') + Math.abs(d).toFixed(1) + '</span> วันที่ไม่ได้ทำเลย ' +
+        '<span style="color:var(--dim);font-size:11px">(' + allYes.length + ' vs ' + allNo.length + ' วัน)</span>' });
     }
   }
 
@@ -1623,8 +1672,6 @@ function renderSettings() {
     '<br>พื้นที่ที่ใช้: ' + kb + ' KB · ' + (pct < 1 ? 'น้อยกว่า 1' : pct) + '% ของที่มี';
 
   renderInstallStatus();
-  renderFeedback();
-  renderReview();
 
   const vi = document.getElementById('version-info');
   if (vi) {
@@ -1683,6 +1730,55 @@ function renderReview() {
 }
 
 // ── Export / Import — เก็บทุกอย่าง ──
+// ── บันทึกเสริม — ข้อมูลคนละชุดกับ entries เจตนา ไม่ให้กระทบ streak/insight/Monthly Review เลย ──
+const K_EXTRA = 'reflect_extra_notes_v1';
+function loadExtraNotes() {
+  try {
+    const raw = localStorage.getItem(K_EXTRA);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (err) { return []; }
+}
+function saveExtraNotesArr(arr) {
+  try { localStorage.setItem(K_EXTRA, JSON.stringify(arr)); } catch (err) {}
+}
+function renderExtraNotes() {
+  const list = loadExtraNotes();
+  const el = document.getElementById('extra-notes-list');
+  if (!el) return;
+  if (!list.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ยังไม่มีบันทึกเสริม</p>'; return; }
+  el.innerHTML = list.slice().reverse().map(function (n) {
+    return '<div class="card" style="background:var(--bg);margin-bottom:10px">' +
+      (n.label ? '<div style="font-size:12px;color:var(--accentL);margin-bottom:6px">' + esc(n.label) + '</div>' : '') +
+      '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + esc(n.text) + '</div>' +
+      '<div class="mt-10"><button class="btn-small" onclick="deleteExtraNote(\'' + n.id + '\')">🗑 ลบ</button></div>' +
+      '</div>';
+  }).join('');
+}
+function toggleExtraNoteForm(show) {
+  document.getElementById('extra-notes-form').classList.toggle('hidden', !show);
+  document.getElementById('extra-note-add-btn').classList.toggle('hidden', show);
+  if (!show) {
+    document.getElementById('extra-note-label').value = '';
+    document.getElementById('extra-note-text').value = '';
+  }
+}
+function saveExtraNote() {
+  const label = document.getElementById('extra-note-label').value.trim();
+  const text = document.getElementById('extra-note-text').value.trim();
+  if (!text) { alert('ยังไม่ได้เขียนอะไรเลย'); return; }
+  const list = loadExtraNotes();
+  list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, addedAt: new Date().toISOString() });
+  saveExtraNotesArr(list);
+  toggleExtraNoteForm(false);
+  renderExtraNotes();
+}
+function deleteExtraNote(id) {
+  if (!window.confirm('ลบบันทึกเสริมนี้?\nลบแล้วกู้คืนไม่ได้')) return;
+  saveExtraNotesArr(loadExtraNotes().filter(function (n) { return n.id !== id; }));
+  renderExtraNotes();
+}
+
 function handleExport() {
   const payload = {
     app: 'reflect',
@@ -1690,7 +1786,8 @@ function handleExport() {
     exportedAt: new Date().toISOString(),
     entries: entries,
     prefs: prefs,
-    drafts: loadAllDrafts()   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
+    drafts: loadAllDrafts(),   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
+    extraNotes: loadExtraNotes()   // บันทึกเสริมที่ไม่ผูกกับวัน — ไปด้วยกันตอน export แต่คนละชุดข้อมูล
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1757,6 +1854,17 @@ function handleImport(evt) {
           if (incLen > curLen) localDrafts[dt] = inc;   // เก็บอันที่เนื้อหายาวกว่า กันทับของใหม่กว่าด้วยของเก่า
         });
         saveAllDrafts(localDrafts);
+      }
+
+      // restore บันทึกเสริม — รวมกับของเดิม กันซ้ำด้วย id
+      if (Array.isArray(data.extraNotes) && data.extraNotes.length) {
+        const localExtra = loadExtraNotes();
+        const haveIds = new Set(localExtra.map(function (n) { return n.id; }));
+        let addedExtra = 0;
+        data.extraNotes.forEach(function (n) {
+          if (n && n.id && !haveIds.has(n.id)) { localExtra.push(n); haveIds.add(n.id); addedExtra++; }
+        });
+        if (addedExtra) saveExtraNotesArr(localExtra);
       }
 
       alert('นำเข้าสำเร็จ\nเพิ่มใหม่ ' + added + ' วัน' + (updated ? '\nอัปเดต ' + updated + ' วัน' : '') + '\nรวมทั้งหมด ' + entries.length + ' entries');
@@ -1894,6 +2002,32 @@ function renderInstallStatus() {
 }
 
 // ── บังคับตรวจหาเวอร์ชันใหม่ ──
+// ── แชร์ให้เพื่อน — ใช้เมนูแชร์ของระบบถ้ามี ไม่มีก็ copy ลิงก์แทน ──
+function shareApp() {
+  const shareData = {
+    title: 'Reflect — ไดอารี่ส่วนตัวที่อยู่ในเครื่องคุณ',
+    text: 'ลองแอปจดบันทึกที่เป็นส่วนตัวจริงๆ ดูสิ ไม่มีเซิร์ฟเวอร์ ไม่มีบัญชี ข้อมูลอยู่ในเครื่องเราเองล้วนๆ',
+    url: 'https://liamsodium.github.io/Reflect-site/'
+  };
+  if (navigator.share) {
+    navigator.share(shareData).catch(function () {});
+    return;
+  }
+  // ไม่มีเมนูแชร์ระบบ (มักเป็นบนคอม) — เปิดลิงก์ในแท็บใหม่แทน ให้เห็นชัดว่ามีอะไรเกิดขึ้น
+  const win = window.open(shareData.url, '_blank', 'noopener');
+  if (win) return;
+  // เปิดแท็บใหม่ไม่ได้ (โดน popup blocker) — ทางสำรองสุดท้าย copy ลิงก์
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareData.url).then(function () {
+      alert('คัดลอกลิงก์แล้ว วางส่งให้เพื่อนได้เลย\n' + shareData.url);
+    }).catch(function () {
+      alert(shareData.url);
+    });
+  } else {
+    alert(shareData.url);
+  }
+}
+
 function forceRefresh() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistration().then(function (reg) {
