@@ -114,9 +114,14 @@
 
     /* Calendar */
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .cal-cell { aspect-ratio: 1; border-radius: 5px; background: var(--border); opacity: 0.35; }
+    .cal-weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 6px; }
+    .cal-weekday-row span { text-align: center; font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; }
+    .cal-cell { aspect-ratio: 1; border-radius: 5px; background: var(--border); opacity: 0.35; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--bg); font-family: 'DM Mono', monospace; }
     .cal-cell.has { opacity: 1; cursor: pointer; transition: transform 0.1s ease; }
     .cal-cell.has:active { transform: scale(0.82); }
+    .cal-cell-empty { background: transparent !important; }
+    .chip { display: inline-block; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--dim); font-size: 12px; margin: 0 6px 6px 0; cursor: pointer; font-family: 'Sarabun', sans-serif; }
+    .chip.chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .bar-wrap.clickable { cursor: pointer; }
     .bar-wrap.clickable:active .bar-fill { opacity: 0.5; }
     .cal-dow { font-size: 9px; color: var(--dim); text-align: center; font-family: 'DM Mono', monospace; }
@@ -417,6 +422,9 @@
       </div>
       <div class="card">
         <span class="lbl">30 วันล่าสุด</span>
+        <div class="cal-weekday-row">
+          <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+        </div>
         <div id="calendar-grid"></div>
         <p class="chart-sub" id="calendar-sub"></p>
       </div>
@@ -527,11 +535,13 @@
 
     <div id="tab-extra" class="anim hidden">
       <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:18px">พื้นที่แยกสำหรับเขียนยาวๆ ที่ไม่ผูกกับวันไหนโดยเฉพาะ — เขียนในแอปโน้ตที่ถนัดอยู่แล้ว (เช่น Apple Notes) แล้ว copy มาวางตรงนี้ก็ได้ ไม่กระทบ streak หรือกราฟใดๆ ในแอปเลย และไปด้วยกันทุกครั้งที่กด export</p>
+      <input type="text" id="extra-note-search" class="search-box" oninput="renderExtraNotes()" placeholder="ค้นหาในบันทึกเสริม…" />
+      <div id="extra-notes-filter-chips"></div>
       <div id="extra-notes-form" class="hidden mt-14">
         <input type="text" id="extra-note-label" class="search-box" style="margin-bottom:10px" placeholder="ป้ายกำกับ (ไม่บังคับ) เช่น '3 วันก่อน' หรือ 'หลังสอบเคมี'" />
         <textarea id="extra-note-text" placeholder="วางหรือพิมพ์เรื่องที่อยากเก็บไว้..."></textarea>
         <div class="settings-row mt-14">
-          <button class="btn-small accent" onclick="saveExtraNote()">บันทึก</button>
+          <button class="btn-small accent" id="extra-note-save-btn" onclick="saveExtraNote()">บันทึก</button>
           <button class="btn-small" onclick="toggleExtraNoteForm(false)">ยกเลิก</button>
         </div>
       </div>
@@ -615,7 +625,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '8.4';
+const APP_VERSION = '8.7';
 const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -1433,14 +1443,20 @@ function renderChart() {
   const set = new Set(entries.map(e => e.date));
   let cal = '<div class="cal-grid">';
   const now = new Date();
+  // เติมช่องว่างหลอกด้านหน้า ให้คอลัมน์แรกตรงกับวันที่ "วันแรกของ 30 วัน" ตกวันอะไรจริงๆ
+  const firstDay = new Date(now); firstDay.setDate(now.getDate() - 29);
+  const leadingBlanks = firstDay.getDay(); // 0 = อาทิตย์
+  for (let b = 0; b < leadingBlanks; b++) cal += '<div class="cal-cell cal-cell-empty"></div>';
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now); d.setDate(now.getDate() - i);
     const k = localKey(d);
     const has = set.has(k);
     const e = has ? entries.find(x => x.date === k) : null;
+    const score = has ? Math.round(e.overall != null ? e.overall : 5) : null;
     const bg = has ? scoreColor(e.overall != null ? e.overall : 5, 10) : 'var(--border)';
     const clickAttr = has ? ' onclick="goToDate(\'' + k + '\')"' : '';
-    cal += '<div class="cal-cell' + (has ? ' has' : '') + '" style="background:' + bg + '" title="' + k + '"' + clickAttr + '></div>';
+    cal += '<div class="cal-cell' + (has ? ' has' : '') + '" style="background:' + bg + '" title="' + k + '"' + clickAttr + '>' +
+      (has ? score : '') + '</div>';
   }
   cal += '</div>';
   document.getElementById('calendar-grid').innerHTML = cal;
@@ -1742,33 +1758,88 @@ function loadExtraNotes() {
 function saveExtraNotesArr(arr) {
   try { localStorage.setItem(K_EXTRA, JSON.stringify(arr)); } catch (err) {}
 }
+let extraNoteFilterLabel = null; // ป้ายที่กำลังกรองอยู่ — null แปลว่าโชว์ทั้งหมด
+
 function renderExtraNotes() {
-  const list = loadExtraNotes();
+  const all = loadExtraNotes();
   const el = document.getElementById('extra-notes-list');
+  const chipsEl = document.getElementById('extra-notes-filter-chips');
   if (!el) return;
-  if (!list.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ยังไม่มีบันทึกเสริม</p>'; return; }
+
+  // สร้างชิปจากป้ายที่มีอยู่จริงเท่านั้น (ไม่ใช่ลิสต์ตายตัว)
+  const labels = Array.from(new Set(all.map(function (n) { return n.label; }).filter(Boolean)));
+  // ถ้าป้ายที่กำลังกรองอยู่ไม่มีในรายการแล้ว (เช่น ลบบันทึกสุดท้ายของป้ายนั้นไป) ให้รีเซ็ตกลับเป็น "ทั้งหมด"
+  if (extraNoteFilterLabel !== null && labels.indexOf(extraNoteFilterLabel) === -1) extraNoteFilterLabel = null;
+
+  if (chipsEl) {
+    if (!labels.length) {
+      chipsEl.innerHTML = '';
+    } else {
+      let chipHtml = '<button class="chip' + (extraNoteFilterLabel === null ? ' chip-active' : '') + '" onclick="setExtraNoteFilter(null)">ทั้งหมด</button>';
+      labels.forEach(function (lb) {
+        const safe = lb.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        chipHtml += '<button class="chip' + (extraNoteFilterLabel === lb ? ' chip-active' : '') + '" onclick="setExtraNoteFilter(\'' + safe + '\')">' + esc(lb) + '</button>';
+      });
+      chipsEl.innerHTML = chipHtml;
+    }
+  }
+
+  const searchEl = document.getElementById('extra-note-search');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  let list = all;
+  if (extraNoteFilterLabel !== null) list = list.filter(function (n) { return n.label === extraNoteFilterLabel; });
+  if (q) list = list.filter(function (n) {
+    return (n.text || '').toLowerCase().indexOf(q) !== -1 || (n.label || '').toLowerCase().indexOf(q) !== -1;
+  });
+
+  if (!all.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ยังไม่มีบันทึกเสริม</p>'; return; }
+  if (!list.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ไม่พบบันทึกที่ตรงกับที่ค้นหา</p>'; return; }
+
   el.innerHTML = list.slice().reverse().map(function (n) {
     return '<div class="card" style="background:var(--bg);margin-bottom:10px">' +
       (n.label ? '<div style="font-size:12px;color:var(--accentL);margin-bottom:6px">' + esc(n.label) + '</div>' : '') +
       '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + esc(n.text) + '</div>' +
-      '<div class="mt-10"><button class="btn-small" onclick="deleteExtraNote(\'' + n.id + '\')">🗑 ลบ</button></div>' +
+      '<div class="mt-10 settings-row"><button class="btn-small" onclick="editExtraNote(\'' + n.id + '\')">✎ แก้ไข</button><button class="btn-small" onclick="deleteExtraNote(\'' + n.id + '\')">🗑 ลบ</button></div>' +
       '</div>';
   }).join('');
 }
+function setExtraNoteFilter(label) {
+  extraNoteFilterLabel = label;
+  renderExtraNotes();
+}
+let extraNoteEditingId = null; // id ที่กำลังแก้ไขอยู่ — null แปลว่ากำลังเพิ่มใหม่
+
 function toggleExtraNoteForm(show) {
   document.getElementById('extra-notes-form').classList.toggle('hidden', !show);
   document.getElementById('extra-note-add-btn').classList.toggle('hidden', show);
   if (!show) {
     document.getElementById('extra-note-label').value = '';
     document.getElementById('extra-note-text').value = '';
+    extraNoteEditingId = null;
+    document.getElementById('extra-note-save-btn').textContent = 'บันทึก';
   }
+}
+function editExtraNote(id) {
+  const n = loadExtraNotes().find(function (x) { return x.id === id; });
+  if (!n) return;
+  extraNoteEditingId = id;
+  toggleExtraNoteForm(true);
+  document.getElementById('extra-note-label').value = n.label || '';
+  document.getElementById('extra-note-text').value = n.text || '';
+  document.getElementById('extra-note-save-btn').textContent = 'อัปเดต';
+  document.getElementById('extra-notes-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function saveExtraNote() {
   const label = document.getElementById('extra-note-label').value.trim();
   const text = document.getElementById('extra-note-text').value.trim();
   if (!text) { alert('ยังไม่ได้เขียนอะไรเลย'); return; }
   const list = loadExtraNotes();
-  list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, addedAt: new Date().toISOString() });
+  if (extraNoteEditingId) {
+    const idx = list.findIndex(function (n) { return n.id === extraNoteEditingId; });
+    if (idx !== -1) { list[idx].label = label; list[idx].text = text; }
+  } else {
+    list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, addedAt: new Date().toISOString() });
+  }
   saveExtraNotesArr(list);
   toggleExtraNoteForm(false);
   renderExtraNotes();
