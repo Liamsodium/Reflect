@@ -51,7 +51,7 @@
     /* Body */
     #body { padding: 20px; max-width: 640px; margin: 0 auto; padding-bottom: calc(50px + env(safe-area-inset-bottom)); }
 
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; overflow-wrap: anywhere; }
     .lbl { display: block; font-size: 11px; color: var(--label); letter-spacing: 0.13em; font-family: 'DM Mono', monospace; margin-bottom: 12px; text-transform: uppercase; }
 
     /* Mode switch */
@@ -141,7 +141,7 @@
     .month-val { font-size: 11px; font-family: 'DM Mono', monospace; min-width: 30px; }
 
     /* History */
-    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; overflow-wrap: anywhere; }
     details > summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; }
     details > summary::-webkit-details-marker { display: none; }
     .entry-date { font-size: 13px; color: #cbd5e1; font-family: 'DM Mono', monospace; }
@@ -231,6 +231,38 @@
 <div id="month-review" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;padding:max(30px, env(safe-area-inset-top)) 24px calc(30px + env(safe-area-inset-bottom));">
   <button class="guide-close" onclick="closeMonthReview()">✕</button>
   <div id="month-review-body"></div>
+</div>
+
+<!-- บันทึกเสริม: หน้าจอเต็ม มี 2 โหมด — อ่าน กับ แก้ไข -->
+<div id="extra-note-modal" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0;margin-bottom:12px">
+    <span id="extra-note-modal-title" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.07em">บันทึกเสริม</span>
+    <button class="guide-close" style="position:static;flex-shrink:0" onclick="closeExtraNoteModal()" aria-label="ปิด">✕</button>
+  </div>
+
+  <!-- โหมดอ่าน -->
+  <div id="extra-note-read" class="hidden" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <div id="extra-note-read-meta" style="flex-shrink:0;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"></div>
+    <div id="extra-note-read-body" style="flex:1;min-height:0;overflow-y:auto;font-size:15px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;padding-right:2px"></div>
+    <div class="settings-row" style="flex-shrink:0;padding-top:14px">
+      <button class="btn-small accent" onclick="switchExtraNoteToEdit()">✎ แก้ไข</button>
+      <button class="btn-small" onclick="closeExtraNoteModal()">ปิด</button>
+    </div>
+  </div>
+
+  <!-- โหมดแก้ไข -->
+  <div id="extra-notes-form" class="hidden" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <input type="text" id="extra-note-label" class="search-box" style="margin-bottom:10px;flex-shrink:0" placeholder="ป้ายกำกับ (ไม่บังคับ) เช่น '3 วันก่อน' หรือ 'หลังสอบเคมี'" />
+    <label class="settings-row" style="align-items:center;margin-bottom:10px;cursor:pointer;flex-shrink:0">
+      <input type="checkbox" id="extra-note-private" style="width:16px;height:16px;flex-shrink:0" />
+      <span style="font-size:13px;color:var(--dim)">🔒 ส่วนตัว — ข้ามตอน "export แบบแชร์ได้"</span>
+    </label>
+    <textarea id="extra-note-text" style="flex:1;min-height:0;overflow-y:auto;resize:none" placeholder="วางหรือพิมพ์เรื่องที่อยากเก็บไว้..."></textarea>
+    <div class="settings-row" style="flex-shrink:0;padding-top:14px">
+      <button class="btn-small accent" id="extra-note-save-btn" onclick="saveExtraNote()">บันทึก</button>
+      <button class="btn-small" onclick="cancelExtraNoteEdit()">ยกเลิก</button>
+    </div>
+  </div>
 </div>
 
 <div id="welcome" class="hidden">
@@ -468,11 +500,13 @@
         </p>
         <div class="settings-row mt-14">
           <button class="btn-small accent" onclick="handleExport()">↓ export ทั้งหมด</button>
+          <button class="btn-small" onclick="handleExportShareable()">↓ export แบบแชร์ได้</button>
           <label class="btn-small" style="cursor:pointer">
             ↑ import
             <input type="file" accept=".json" style="display:none" onchange="handleImport(event)" />
           </label>
         </div>
+        <p class="settings-note" style="margin-top:6px">"export แบบแชร์ได้" ตัดบันทึกเสริมที่ติ๊ก 🔒 ส่วนตัวออก — ใช้ไฟล์นี้เวลาจะวางลง AI แชท "export ทั้งหมด" ยังใช้เป็น backup หลักเหมือนเดิม</p>
         <p class="settings-note" id="last-export-note"></p>
       </div>
 
@@ -537,15 +571,7 @@
       <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:18px">พื้นที่แยกสำหรับเขียนยาวๆ ที่ไม่ผูกกับวันไหนโดยเฉพาะ — เขียนในแอปโน้ตที่ถนัดอยู่แล้ว (เช่น Apple Notes) แล้ว copy มาวางตรงนี้ก็ได้ ไม่กระทบ streak หรือกราฟใดๆ ในแอปเลย และไปด้วยกันทุกครั้งที่กด export</p>
       <input type="text" id="extra-note-search" class="search-box" oninput="renderExtraNotes()" placeholder="ค้นหาในบันทึกเสริม…" />
       <div id="extra-notes-filter-chips"></div>
-      <div id="extra-notes-form" class="hidden mt-14">
-        <input type="text" id="extra-note-label" class="search-box" style="margin-bottom:10px" placeholder="ป้ายกำกับ (ไม่บังคับ) เช่น '3 วันก่อน' หรือ 'หลังสอบเคมี'" />
-        <textarea id="extra-note-text" placeholder="วางหรือพิมพ์เรื่องที่อยากเก็บไว้..."></textarea>
-        <div class="settings-row mt-14">
-          <button class="btn-small accent" id="extra-note-save-btn" onclick="saveExtraNote()">บันทึก</button>
-          <button class="btn-small" onclick="toggleExtraNoteForm(false)">ยกเลิก</button>
-        </div>
-      </div>
-      <button class="btn-small accent mt-14" id="extra-note-add-btn" onclick="toggleExtraNoteForm(true)">+ เพิ่มบันทึกเสริม</button>
+      <button class="btn-small accent mt-14" id="extra-note-add-btn" onclick="addExtraNoteClicked()">+ เพิ่มบันทึกเสริม</button>
       <div id="extra-notes-list" class="mt-14"></div>
     </div>
 
@@ -571,7 +597,7 @@
         <span class="lbl">ใช้ AI ช่วยวิเคราะห์ (ไม่บังคับ)</span>
         <p class="settings-text">แอปนี้ไม่มี AI ในตัว เพราะคุณภาพจะสู้การคุยกับ AI ตัวเต็มไม่ได้ ถ้าอยากได้บทวิเคราะห์ ทำแบบนี้:</p>
         <div class="info-box">
-          <strong style="color:var(--text)">1.</strong> กด "export ทั้งหมด" ในแท็บตั้งค่า<br>
+          <strong style="color:var(--text)">1.</strong> กด "export แบบแชร์ได้" ในแท็บตั้งค่า<br>
           <strong style="color:var(--text)">2.</strong> เปิด AI ที่ใช้อยู่ (Claude / ChatGPT / Gemini)<br>
           <strong style="color:var(--text)">3.</strong> วาง prompt ข้างล่าง แล้วแนบไฟล์ .json<br>
           <strong style="color:var(--text)">4.</strong> ถามต่อได้เรื่อยๆ — ตรงนี้คือส่วนที่มีค่าที่สุด
@@ -582,7 +608,7 @@
           <button class="btn-copy" id="copy-prompt-btn" onclick="copyPrompt()">⎘ copy prompt</button>
         </div>
         <div class="warn-box mt-14">
-          🔒 การวาง journal ในแชท AI = ส่งข้อมูลออกจากเครื่องไปให้บริษัทอื่น อ่านสิ่งที่จะแชร์ก่อนตัดสินใจทุกครั้ง ถ้ามีเรื่องที่ไม่อยากให้ใครเห็น ลบส่วนนั้นออกก่อน
+          🔒 การวาง journal ในแชท AI = ส่งข้อมูลออกจากเครื่องไปให้บริษัทอื่น "export แบบแชร์ได้" ตัดเฉพาะบันทึกเสริมที่ติ๊ก 🔒 ส่วนตัวออกให้อัตโนมัติ แต่บันทึกประจำวัน (คำตอบคำถาม/บันทึกเพิ่มเติม/intention) ยังรวมอยู่เหมือนเดิม — อ่านทวนก่อนวางทุกครั้งถ้ามีเรื่องอ่อนไหวในนั้น
         </div>
       </div>
     </div>
@@ -625,7 +651,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '8.7';
+const APP_VERSION = '9.6';
 const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -734,15 +760,6 @@ function freshSliders() {
 sliders = freshSliders();
 
 // ── Helpers ──
-function pickThree(seed) {
-  const idx = []; let s = seed;
-  while (idx.length < 3) {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    const i = Math.abs(s) % PROMPTS.length;
-    if (!idx.includes(i)) idx.push(i);
-  }
-  return idx.map(i => ({ index: i, text: PROMPTS[i] }));
-}
 function localKey(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -754,11 +771,59 @@ function dayIndex(dstr) {
   const p = dstr.split('-').map(Number);
   return Math.floor(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000);
 }
-function promptsForDay(d) { return pickThree(dayIndex(d) * 7919 + 12345); }
+const PROMPT_COOLDOWN_DAYS = 5;   // คำถามที่เพิ่งถามไปภายในกี่วัน ห้ามโผล่ซ้ำ
+
+const PROMPTS_PER_DAY = 3;
+
+// สับไพ่ทั้งสำรับแบบ deterministic ตามหมายเลขรอบ (รอบเดิมได้ลำดับเดิมเสมอ)
+// ใช้ร่วมกันทั้งโหมดเต็มและโหมดรีบ — salt ทำให้สองคลังสับไม่เหมือนกัน
+function shuffledDeckOf(len, cycle, salt) {
+  const deck = [];
+  for (let i = 0; i < len; i++) deck.push(i);
+  let s = (cycle * 2654435761 + 12345 + salt) >>> 0;
+  for (let i = deck.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    const t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+  }
+  return deck;
+}
+// สำรับของรอบนี้ โดยกันไม่ให้ช่วงต้นรอบชนกับช่วงท้ายของรอบก่อน (กันซ้ำตรงรอยต่อ)
+function deckForCycleOf(len, cycle, perDay, salt) {
+  const deck = shuffledDeckOf(len, cycle, salt);
+  if (cycle <= 0) return deck;
+  const guardLen = Math.min(PROMPT_COOLDOWN_DAYS * perDay, Math.floor(len / 2));
+  const prev = shuffledDeckOf(len, cycle - 1, salt);
+  const prevTail = new Set(prev.slice(Math.max(0, prev.length - guardLen)));
+  for (let i = 0; i < guardLen && i < deck.length; i++) {
+    if (!prevTail.has(deck[i])) continue;
+    for (let j = guardLen; j < deck.length; j++) {
+      if (!prevTail.has(deck[j])) { const t = deck[i]; deck[i] = deck[j]; deck[j] = t; break; }
+    }
+  }
+  return deck;
+}
+// ดึงไพ่ของวันนั้นออกจากสำรับ — ใช้ได้ทั้งสองโหมด
+function dealForDay(len, dayIdx, perDay, salt) {
+  const perCycle = Math.floor(len / perDay);
+  const cycle = Math.floor(dayIdx / perCycle);
+  const pos = dayIdx - cycle * perCycle;
+  const cards = deckForCycleOf(len, cycle, perDay, salt);
+  const idx = [];
+  for (let k = 0; k < perDay; k++) {
+    const c = cards[pos * perDay + k];
+    if (typeof c === 'number') idx.push(c);
+  }
+  // กันเหนียว: ถ้าด้วยเหตุใดได้ไม่ครบ ให้เติมจากข้อที่ยังไม่ถูกใช้
+  for (let i = 0; idx.length < perDay && i < len; i++) if (idx.indexOf(i) === -1) idx.push(i);
+  return idx;
+}
+function promptsForDay(d) {
+  return dealForDay(PROMPTS.length, dayIndex(d), PROMPTS_PER_DAY, 0)
+    .map(function (i) { return { index: i, text: PROMPTS[i] }; });
+}
 function quickPromptForDay(d) {
-  let s = dayIndex(d) * 2654435761 + 998244353;
-  s = (s * 1664525 + 1013904223) & 0xffffffff;
-  const i = Math.abs(s) % QUICK_PROMPTS.length;
+  const i = dealForDay(QUICK_PROMPTS.length, dayIndex(d), 1, 777)[0];
   return { index: i, text: QUICK_PROMPTS[i], quick: true };
 }
 // ใช้จุดเดียวทั้งตอนแสดงคำถามและตอนบันทึก กันคำถามที่โชว์กับที่เก็บไม่ตรงกัน
@@ -774,6 +839,12 @@ function fmtFull(d) {
   const p = d.split('-').map(Number);
   const m = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][p[1]-1];
   return p[2] + ' ' + m + ' ' + (p[0] + 543);
+}
+// วันที่แบบสั้น + ปี พ.ศ. 2 หลัก เช่น "11 ก.ย. 69" — ใช้กับบันทึกเสริม (สไตล์เดียวกับ BUILD_DATE)
+function fmtShortY(d) {
+  const p = d.split('-').map(Number);
+  const m = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][p[1]-1];
+  return p[2] + ' ' + m + ' ' + String(p[0] + 543).slice(-2);
 }
 function daysBetween(a, b) { return dayIndex(b) - dayIndex(a); }
 function getWeekEntries(weeksAgo) {
@@ -1748,6 +1819,7 @@ function renderReview() {
 // ── Export / Import — เก็บทุกอย่าง ──
 // ── บันทึกเสริม — ข้อมูลคนละชุดกับ entries เจตนา ไม่ให้กระทบ streak/insight/Monthly Review เลย ──
 const K_EXTRA = 'reflect_extra_notes_v1';
+const K_EXTRA_DRAFT = 'reflect_extra_note_draft_v1';   // ร่างที่ยังไม่ได้กดบันทึก/อัปเดต กันหายตอนออกแอปกลางคัน
 function loadExtraNotes() {
   try {
     const raw = localStorage.getItem(K_EXTRA);
@@ -1757,6 +1829,68 @@ function loadExtraNotes() {
 }
 function saveExtraNotesArr(arr) {
   try { localStorage.setItem(K_EXTRA, JSON.stringify(arr)); } catch (err) {}
+}
+// ── ร่างบันทึกเสริม (กันหายถ้าออกแอปก่อนกดบันทึก) ──
+// เก็บแยกราย id ไม่ใช่ช่องเดียวรวม — ไม่งั้นเปิดโน้ตอีกอันแล้วร่างของอันแรกหาย
+function loadExtraDrafts() {
+  try {
+    const raw = localStorage.getItem(K_EXTRA_DRAFT);
+    const o = raw ? JSON.parse(raw) : {};
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  } catch (err) { return {}; }
+}
+function saveExtraDrafts(o) {
+  try { localStorage.setItem(K_EXTRA_DRAFT, JSON.stringify(o)); } catch (err) {}
+}
+function draftKeyFor(id) { return id || '__new__'; }
+function saveExtraNoteDraft() {
+  const form = document.getElementById('extra-notes-form');
+  if (!form || form.classList.contains('hidden')) return;   // ฟอร์มไม่ได้เปิดอยู่ ไม่ต้องเก็บ
+  const label = (document.getElementById('extra-note-label') || {}).value || '';
+  const text = (document.getElementById('extra-note-text') || {}).value || '';
+  const priv = !!(document.getElementById('extra-note-private') || {}).checked;
+  const key = draftKeyFor(extraNoteEditingId);
+  const drafts = loadExtraDrafts();
+  const dropDraft = function () { if (drafts[key]) { delete drafts[key]; saveExtraDrafts(drafts); } };
+  if (extraNoteEditingId) {
+    // แก้ของเดิม: ถ้าเนื้อหายังเหมือนที่บันทึกไว้เป๊ะ ไม่มีอะไรต้องกู้ ไม่ต้องเก็บร่าง
+    const n = loadExtraNotes().find(function (x) { return x.id === extraNoteEditingId; });
+    if (n && (n.text || '') === text && (n.label || '') === label && !!n.private === priv) { dropDraft(); return; }
+  } else if (!label.trim() && !text.trim()) {
+    dropDraft(); return;   // เขียนใหม่แต่ยังว่างเปล่า ไม่ต้องเก็บ
+  }
+  drafts[key] = { label: label, text: text, private: priv, savedAt: Date.now() };
+  saveExtraDrafts(drafts);
+}
+// ล้างร่างของรายการที่กำลังเปิดอยู่ (ต้องเรียกก่อนรีเซ็ต extraNoteEditingId)
+function clearExtraNoteDraft() {
+  const drafts = loadExtraDrafts();
+  const key = draftKeyFor(extraNoteEditingId);
+  if (drafts[key]) { delete drafts[key]; saveExtraDrafts(drafts); }
+}
+// คืนร่างเข้าฟอร์ม ถ้ามีร่างค้างของรายการนั้น (สร้างใหม่=null หรือแก้ไข id เดียวกัน)
+function restoreExtraNoteDraft(forId) {
+  const d = loadExtraDrafts()[draftKeyFor(forId)];
+  if (!d) return false;
+  document.getElementById('extra-note-label').value = d.label || '';
+  document.getElementById('extra-note-text').value = d.text || '';
+  document.getElementById('extra-note-private').checked = !!d.private;
+  return true;
+}
+// ทิ้งร่างของโน้ตที่ถูกลบไปแล้ว กันขยะค้างใน localStorage
+function pruneExtraDrafts() {
+  const drafts = loadExtraDrafts();
+  const ids = loadExtraNotes().map(function (n) { return n.id; });
+  let changed = false;
+  Object.keys(drafts).forEach(function (k) {
+    if (k !== '__new__' && ids.indexOf(k) === -1) { delete drafts[k]; changed = true; }
+  });
+  if (changed) saveExtraDrafts(drafts);
+}
+let extraDraftTimer = null;
+function scheduleExtraNoteDraftSave() {
+  clearTimeout(extraDraftTimer);
+  extraDraftTimer = setTimeout(saveExtraNoteDraft, 400);
 }
 let extraNoteFilterLabel = null; // ป้ายที่กำลังกรองอยู่ — null แปลว่าโชว์ทั้งหมด
 
@@ -1796,10 +1930,22 @@ function renderExtraNotes() {
   if (!list.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ไม่พบบันทึกที่ตรงกับที่ค้นหา</p>'; return; }
 
   el.innerHTML = list.slice().reverse().map(function (n) {
+    const dateStr = n.addedAt ? fmtShortY(localKey(new Date(n.addedAt))) : '';
+    const labelText = (n.private ? '🔒 ' : '') + (n.label ? esc(n.label) : '');
+    const header = (n.label || dateStr || n.private)
+      ? '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">' +
+          '<span style="font-size:12px;color:var(--accentL)">' + labelText + '</span>' +
+          '<span class="entry-date" style="font-size:11px;white-space:nowrap">' + dateStr + '</span>' +
+        '</div>'
+      : '';
     return '<div class="card" style="background:var(--bg);margin-bottom:10px">' +
-      (n.label ? '<div style="font-size:12px;color:var(--accentL);margin-bottom:6px">' + esc(n.label) + '</div>' : '') +
-      '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + esc(n.text) + '</div>' +
-      '<div class="mt-10 settings-row"><button class="btn-small" onclick="editExtraNote(\'' + n.id + '\')">✎ แก้ไข</button><button class="btn-small" onclick="deleteExtraNote(\'' + n.id + '\')">🗑 ลบ</button></div>' +
+      header +
+      '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden" onclick="openExtraNoteRead(\'' + n.id + '\')">' + esc(n.text) + '</div>' +
+      '<div class="mt-10 settings-row">' +
+        '<button class="btn-small accent" onclick="openExtraNoteRead(\'' + n.id + '\')">⤢ เปิดอ่าน</button>' +
+        '<button class="btn-small" onclick="editExtraNote(\'' + n.id + '\')">✎ แก้ไข</button>' +
+        '<button class="btn-small" onclick="deleteExtraNote(\'' + n.id + '\')">🗑 ลบ</button>' +
+      '</div>' +
       '</div>';
   }).join('');
 }
@@ -1809,67 +1955,140 @@ function setExtraNoteFilter(label) {
 }
 let extraNoteEditingId = null; // id ที่กำลังแก้ไขอยู่ — null แปลว่ากำลังเพิ่มใหม่
 
-function toggleExtraNoteForm(show) {
-  document.getElementById('extra-notes-form').classList.toggle('hidden', !show);
-  document.getElementById('extra-note-add-btn').classList.toggle('hidden', show);
-  if (!show) {
-    document.getElementById('extra-note-label').value = '';
-    document.getElementById('extra-note-text').value = '';
-    extraNoteEditingId = null;
-    document.getElementById('extra-note-save-btn').textContent = 'บันทึก';
-  }
+let extraNoteViewingId = null; // id ที่กำลังเปิดอ่านอยู่ในโหมดอ่าน
+
+// ล้างฟอร์มและปิดหน้าจอเต็ม — keepDraft=true ใช้ตอนกด ✕ (ยังไม่อยากทิ้งของที่เขียนค้าง)
+function closeExtraNoteForm(keepDraft) {
+  if (keepDraft) saveExtraNoteDraft();   // ต้องเก็บก่อนล้างช่อง ไม่งั้นได้ร่างเปล่า
+  else clearExtraNoteDraft();
+  document.getElementById('extra-notes-form').classList.add('hidden');
+  document.getElementById('extra-note-label').value = '';
+  document.getElementById('extra-note-text').value = '';
+  document.getElementById('extra-note-private').checked = false;
+  document.getElementById('extra-note-save-btn').textContent = 'บันทึก';
+  extraNoteEditingId = null;
 }
-function editExtraNote(id) {
+function openExtraNoteModal() {
+  document.getElementById('extra-note-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';   // กันหน้าหลังเลื่อนตามตอนเปิดจอเต็ม
+}
+function closeExtraNoteModal() {
+  closeExtraNoteForm(true);                  // กด ✕ = เก็บร่างไว้ ไม่ทิ้งของที่เขียนค้าง
+  document.getElementById('extra-note-read').classList.add('hidden');
+  document.getElementById('extra-note-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  extraNoteViewingId = null;
+}
+function cancelExtraNoteEdit() {
+  closeExtraNoteForm(false);                 // "ยกเลิก" = ตั้งใจทิ้ง ล้างร่างด้วย
+  document.getElementById('extra-note-modal').classList.add('hidden');
+  document.getElementById('extra-note-read').classList.add('hidden');
+  document.body.style.overflow = '';
+  extraNoteViewingId = null;
+}
+// ── โหมดอ่าน ──
+function openExtraNoteRead(id) {
   const n = loadExtraNotes().find(function (x) { return x.id === id; });
   if (!n) return;
-  extraNoteEditingId = id;
-  toggleExtraNoteForm(true);
-  document.getElementById('extra-note-label').value = n.label || '';
-  document.getElementById('extra-note-text').value = n.text || '';
-  document.getElementById('extra-note-save-btn').textContent = 'อัปเดต';
-  document.getElementById('extra-notes-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  extraNoteViewingId = id;
+  const dateStr = n.addedAt ? fmtShortY(localKey(new Date(n.addedAt))) : '';
+  document.getElementById('extra-note-read-meta').innerHTML =
+    '<span style="font-size:13px;color:var(--accentL)">' + (n.private ? '🔒 ' : '') + (n.label ? esc(n.label) : '') + '</span>' +
+    '<span class="entry-date" style="font-size:11px;white-space:nowrap">' + dateStr + '</span>';
+  const body = document.getElementById('extra-note-read-body');
+  body.textContent = n.text || '';
+  body.scrollTop = 0;
+  document.getElementById('extra-note-modal-title').textContent = 'อ่าน';
+  document.getElementById('extra-notes-form').classList.add('hidden');
+  document.getElementById('extra-note-read').classList.remove('hidden');
+  openExtraNoteModal();
 }
+function switchExtraNoteToEdit() {
+  if (extraNoteViewingId) openExtraNoteEdit(extraNoteViewingId);
+}
+// ── โหมดแก้ไข — id=null คือเขียนใหม่ ──
+function openExtraNoteEdit(id) {
+  document.getElementById('extra-note-read').classList.add('hidden');
+  document.getElementById('extra-notes-form').classList.remove('hidden');
+  document.getElementById('extra-note-modal-title').textContent = id ? 'แก้ไข' : 'เขียนใหม่';
+  openExtraNoteModal();
+  if (id) {
+    const n = loadExtraNotes().find(function (x) { return x.id === id; });
+    if (!n) { closeExtraNoteModal(); return; }
+    extraNoteEditingId = id;
+    document.getElementById('extra-note-label').value = n.label || '';
+    document.getElementById('extra-note-text').value = n.text || '';
+    document.getElementById('extra-note-private').checked = !!n.private;
+    document.getElementById('extra-note-save-btn').textContent = 'อัปเดต';
+  } else {
+    extraNoteEditingId = null;
+    document.getElementById('extra-note-label').value = '';
+    document.getElementById('extra-note-text').value = '';
+    document.getElementById('extra-note-private').checked = false;
+    document.getElementById('extra-note-save-btn').textContent = 'บันทึก';
+  }
+  // ร่างที่ค้างไว้ใหม่กว่าเสมอ — ถ้ามีของโหมดเดียวกัน ใช้อันนั้นแทน
+  restoreExtraNoteDraft(id || null);
+  document.getElementById('extra-note-text').focus();
+}
+function addExtraNoteClicked() { openExtraNoteEdit(null); }
+function editExtraNote(id) { openExtraNoteEdit(id); }
 function saveExtraNote() {
   const label = document.getElementById('extra-note-label').value.trim();
   const text = document.getElementById('extra-note-text').value.trim();
+  const isPrivate = document.getElementById('extra-note-private').checked;
   if (!text) { alert('ยังไม่ได้เขียนอะไรเลย'); return; }
   const list = loadExtraNotes();
   if (extraNoteEditingId) {
     const idx = list.findIndex(function (n) { return n.id === extraNoteEditingId; });
-    if (idx !== -1) { list[idx].label = label; list[idx].text = text; }
+    if (idx !== -1) { list[idx].label = label; list[idx].text = text; list[idx].private = isPrivate; }
   } else {
-    list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, addedAt: new Date().toISOString() });
+    list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, private: isPrivate, addedAt: new Date().toISOString() });
   }
   saveExtraNotesArr(list);
-  toggleExtraNoteForm(false);
+  cancelExtraNoteEdit();   // บันทึกสำเร็จแล้ว ร่างไม่จำเป็นอีก ล้างทิ้งได้
   renderExtraNotes();
 }
 function deleteExtraNote(id) {
   if (!window.confirm('ลบบันทึกเสริมนี้?\nลบแล้วกู้คืนไม่ได้')) return;
   saveExtraNotesArr(loadExtraNotes().filter(function (n) { return n.id !== id; }));
+  const drafts = loadExtraDrafts();
+  if (drafts[id]) { delete drafts[id]; saveExtraDrafts(drafts); }   // ลบโน้ตแล้ว ร่างของมันต้องไม่ค้าง
   renderExtraNotes();
 }
 
-function handleExport() {
-  const payload = {
+function buildExportPayload(shareable) {
+  const allExtra = loadExtraNotes();
+  return {
     app: 'reflect',
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     entries: entries,
     prefs: prefs,
     drafts: loadAllDrafts(),   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
-    extraNotes: loadExtraNotes()   // บันทึกเสริมที่ไม่ผูกกับวัน — ไปด้วยกันตอน export แต่คนละชุดข้อมูล
+    // บันทึกเสริมที่ไม่ผูกกับวัน — ไปด้วยกันตอน export แต่คนละชุดข้อมูล
+    // export แบบแชร์ได้ (shareable) จะตัดอันที่ติ๊ก 🔒 ส่วนตัวออก
+    extraNotes: shareable ? allExtra.filter(function (n) { return !n.private; }) : allExtra
   };
+}
+function downloadJSON(payload, filename) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'reflect-backup-' + todayKey() + '.json';
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+}
+function handleExport() {
+  downloadJSON(buildExportPayload(false), 'reflect-backup-' + todayKey() + '.json');
   prefs.lastExport = todayKey(); savePrefs();
   renderSettings();
+}
+function handleExportShareable() {
+  downloadJSON(buildExportPayload(true), 'reflect-shareable-' + todayKey() + '.json');
+  // ไม่อัปเดต lastExport — นี่ไม่ใช่ backup ฉบับสมบูรณ์ ยังต้อง "export ทั้งหมด" เก็บไว้ต่างหากด้วย
 }
 
 function handleImport(evt) {
@@ -2126,17 +2345,24 @@ document.querySelectorAll('.tab-btn').forEach(function (btn) {
 });
 
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape' && !document.getElementById('guide-close').classList.contains('hidden')) closeGuide();
+  if (e.key !== 'Escape') return;
+  if (!document.getElementById('extra-note-modal').classList.contains('hidden')) { closeExtraNoteModal(); return; }
+  if (!document.getElementById('guide-close').classList.contains('hidden')) closeGuide();
 });
 
 loadAll();
 document.getElementById('version-line').textContent = 'v' + APP_VERSION + ' · daily journal';
 migrateOldDraft();
 pruneOldDrafts();
+pruneExtraDrafts();
 activeDate = todayKey();
 applyQuickMode();
 wireGrow(document.getElementById('notes-input'));
 wireGrow(document.getElementById('intention-input'));
+// หมายเหตุ: extra-note-text ไม่ใช้ autoGrow แล้ว — ในจอเต็มมันยืดเต็มพื้นที่ด้วย flex และเลื่อนในตัวเอง
+document.getElementById('extra-note-text').addEventListener('input', scheduleExtraNoteDraftSave);
+document.getElementById('extra-note-label').addEventListener('input', scheduleExtraNoteDraftSave);
+document.getElementById('extra-note-private').addEventListener('change', saveExtraNoteDraft);
 loadForDate(activeDate);
 renderAllSliders();
 renderQuestions();
@@ -2156,7 +2382,12 @@ if (!prefs.seenWelcome && entries.length === 0) {
 }
 
 setInterval(saveDraft, 2000);
-window.addEventListener('beforeunload', saveDraft);
+// กันบันทึกหายตอนสลับแอป/ปิดแอปกลางคัน — visibilitychange เชื่อถือได้กว่า beforeunload บนมือถือมาก
+// ครอบทั้งฟอร์มหลัก (บันทึกประจำวัน) และบันทึกเสริม จุดเดียวกันเป๊ะ
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) { saveDraft(); saveExtraNoteDraft(); }
+});
+window.addEventListener('beforeunload', function () { saveDraft(); saveExtraNoteDraft(); });
 </script>
 </body>
 </html>
