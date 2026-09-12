@@ -23,6 +23,9 @@
       --accent: #6366f1; --accentL: #c7d2fe;
       --green: #22c55e; --yellow: #eab308; --red: #ef4444;
       --orange: #f97316; --label: #a5b4fc;
+      /* ปุ่มรอง: พื้นสว่างกว่าการ์ดเล็กน้อย + ขอบชัดกว่าเส้นคั่นทั่วไป จะได้ดูเป็นปุ่มที่กดได้จริง
+         (สีฟ้ายังสงวนไว้ให้ปุ่มหลักของแต่ละกล่องเหมือนเดิม) */
+      --btn-bg: #1c2940bf; --btn-border: #54678a;
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; }
     body { overflow-x: hidden; }
@@ -71,7 +74,7 @@
 
     /* Toggle */
     .toggles { display: flex; gap: 8px; flex-wrap: wrap; }
-    .toggle-btn { display: flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Sarabun', sans-serif; }
+    .toggle-btn { display: flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: 'Sarabun', sans-serif; }
     .toggle-btn.on { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
 
     .prompt-text { font-size: 15px; color: #cbd5e1; line-height: 1.65; margin-bottom: 10px; font-weight: 300; }
@@ -89,14 +92,17 @@
 
     /* Buttons */
     .btn-primary { width: 100%; padding: 15px 0; border-radius: 10px; border: none; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
-    .btn-secondary { width: 100%; padding: 14px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
-    .btn-small { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; display: inline-block; }
+    .btn-secondary { width: 100%; padding: 14px 0; border-radius: 10px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .btn-small { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.15s; display: inline-block; }
     .btn-small.accent { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accentL); }
-    .btn-small.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); color: var(--red); }
-    .btn-copy { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+    .btn-small.danger { border-color: rgba(239,68,68,0.45); background: rgba(239,68,68,0.08); color: var(--red); }
+    .btn-copy { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
     .btn-copy.copied { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); color: var(--green); }
+    /* กดแล้วยุบลงนิดนึง ให้รู้สึกว่ากดติดจริงบนมือถือ */
+    .btn-small:active, .btn-copy:active, .btn-primary:active, .chip:active,
+    .toggle-btn:active, .btn-secondary:active, .week-btn:active { transform: scale(0.97); }
 
-    .week-btn { padding: 8px 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; }
+    .week-btn { padding: 8px 13px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; }
 
     /* Post-submit */
     .submit-icon { text-align: center; padding: 24px 0 28px; }
@@ -120,7 +126,7 @@
     .cal-cell.has { opacity: 1; cursor: pointer; transition: transform 0.1s ease; }
     .cal-cell.has:active { transform: scale(0.82); }
     .cal-cell-empty { background: transparent !important; }
-    .chip { display: inline-block; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--dim); font-size: 12px; margin: 0 6px 6px 0; cursor: pointer; font-family: 'Sarabun', sans-serif; }
+    .chip { display: inline-block; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--muted); font-size: 12px; margin: 0 6px 6px 0; cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
     .chip.chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .bar-wrap.clickable { cursor: pointer; }
     .bar-wrap.clickable:active .bar-fill { opacity: 0.5; }
@@ -651,7 +657,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.6';
+const APP_VERSION = '9.8';
 const BUILD_DATE  = '1 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
