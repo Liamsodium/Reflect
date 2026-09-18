@@ -436,6 +436,17 @@
         <textarea id="notes-input" class="short" placeholder="อะไรก็ได้ที่อยากเขียน..."></textarea>
       </div>
 
+      <div class="card hidden" id="intention-check-card">
+        <span class="lbl">เมื่อก่อนตั้งใจไว้ว่า...</span>
+        <p id="intention-check-text" style="font-size:14px;line-height:1.7;color:var(--accentL);margin:8px 0 12px;white-space:pre-wrap"></p>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:10px">ทำได้ตามที่ตั้งใจไว้ไหม</p>
+        <div class="settings-row">
+          <button class="btn-small" onclick="setIntentionKept('yes')">✓ ทำได้</button>
+          <button class="btn-small" onclick="setIntentionKept('partial')">~ ทำได้บางส่วน</button>
+          <button class="btn-small" onclick="setIntentionKept('no')">✕ ไม่ได้ทำ</button>
+        </div>
+      </div>
+
       <div class="card" id="intention-card">
         <span class="lbl" id="lbl-intention">Intention — อยากทำหรือเป็นอะไรในวันนี้หรือพรุ่งนี้</span>
         <textarea id="intention-input" class="short" placeholder="หนึ่งประโยค..."></textarea>
@@ -477,6 +488,10 @@
         <span class="lbl">สรุปสัปดาห์นี้</span>
         <div id="insight-body"></div>
         <p class="settings-note" id="insight-note"></p>
+        <div class="mt-12" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px">
+          <p style="font-size:12.5px;color:var(--dim);line-height:1.6;margin:0 0 8px">💾 จังหวะดีที่จะ export เก็บไว้ — ทุกครั้งที่มาดูสรุปสัปดาห์</p>
+          <button class="btn-small" onclick="switchTab('settings')">ไปหน้า export →</button>
+        </div>
       </div>
       <div class="card" id="dow-insight-card">
         <span class="lbl">ภาพรวมทั้งหมด — pattern รายวัน</span>
@@ -692,8 +707,8 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.14';
-const BUILD_DATE  = '1 ก.ย. 69';
+const APP_VERSION = '9.16';
+const BUILD_DATE  = '18 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
 // │  ใส่ลิงก์ Google Form ของคุณตรงนี้ (แก้ที่เดียวจบ)         │
@@ -710,7 +725,7 @@ const FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSegkWjP9o8ud3MUk0
 const REVIEW_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScQcLBIrpPE_CnJWDLKgRbJ-RNGpaXlh7imitwL06mcnRm56A/viewform';
 const REVIEW_RESULTS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScQcLBIrpPE_CnJWDLKgRbJ-RNGpaXlh7imitwL06mcnRm56A/viewanalytics';
 const SCHEMA      = 2;              // เลขโครงสร้างข้อมูล — เพิ่มขึ้นเมื่อเปลี่ยนรูปแบบ
-const EXPORT_REMIND_DAYS = 30;      // เตือน export ถ้าเกินกี่วัน
+const EXPORT_REMIND_DAYS = 7;       // เตือน export ถ้าเกินกี่วัน (รายสัปดาห์)
 const QUOTA_CHARS = 2600000;        // พื้นที่ประมาณ 5MB (นับเป็นตัวอักษร)
 const QUOTA_WARN  = 0.70;           // เตือนเมื่อใช้ถึง 70%
 
@@ -1240,6 +1255,33 @@ function loadForDate(dateKey) {
   if (i) { i.value = intention; autoGrow(i); }
   const p = document.getElementById('entry-private');
   if (p) p.checked = isPrivate;
+  renderIntentionCheck(dateKey);
+}
+// เช็ก intention ของ "วันก่อนหน้าวันที่กำลังดูอยู่" เสมอ — ไม่ใช่แค่เมื่อวานของวันนี้จริง
+// เพราะถ้าย้อนไปแก้วันเก่า ก็ควรถามถึง intention ของวันก่อนวันนั้นเหมือนกัน สอดคล้องกันทุกที่
+function renderIntentionCheck(dateKey) {
+  const card = document.getElementById('intention-check-card');
+  if (!card) return;
+  const prevKey = shiftKey(dateKey, -1);
+  const prev = entries.find(function (e) { return e.date === prevKey; });
+  if (!prev || !prev.intention || !prev.intention.trim() || prev.intentionKept) {
+    card.classList.add('hidden');
+    return;
+  }
+  document.getElementById('intention-check-text').textContent = prev.intention;
+  card.dataset.forDate = prevKey;
+  card.classList.remove('hidden');
+}
+function setIntentionKept(status) {
+  const card = document.getElementById('intention-check-card');
+  const forDate = card && card.dataset.forDate;
+  if (!forDate) return;
+  const idx = entries.findIndex(function (e) { return e.date === forDate; });
+  if (idx === -1) return;
+  entries[idx].intentionKept = status;
+  saveEntries();
+  card.classList.add('hidden');
+  renderHistory();   // อัปเดตป้ายกำกับในย้อนหลังด้วย ถ้าเรนเดอร์ไว้อยู่แล้ว
 }
 
 function renderDateUI() {
@@ -1279,6 +1321,7 @@ function renderDateUI() {
 function handleSubmit() {
   if (isReadOnly()) return;   // กันไว้อีกชั้น เผื่อมีทางเรียกที่หลุดรอดการซ่อน UI ไป
   const target = activeDate || todayKey();
+  const prevSaved = entries.find(function (e) { return e.date === target; });
   const entry = {
     date: target,
     overall: sliders.overall.val,
@@ -1293,6 +1336,11 @@ function handleSubmit() {
     quick: !!prefs.quickMode,
     private: !!(document.getElementById('entry-private') || {}).checked,
   };
+  // แก้ไขวันเดิมซ้ำ (resubmit): ถ้าข้อความ intention ไม่เปลี่ยน ให้คงสถานะ "ทำได้ไหม" ของเดิมไว้
+  // เปลี่ยนข้อความ = สัญญาใหม่ ไม่ควรมีสถานะเก่าติดมาด้วย
+  if (prevSaved && prevSaved.intentionKept && prevSaved.intention === entry.intention) {
+    entry.intentionKept = prevSaved.intentionKept;
+  }
   entries = entries.filter(e => e.date !== target);
   entries.push(entry);
   entries.sort((a,b) => a.date.localeCompare(b.date));
@@ -1806,7 +1854,12 @@ function renderHistory() {
     });
     let extra = '';
     if (e.notes) extra += '<div class="entry-section"><p class="entry-section-label">NOTES</p><p class="entry-a">' + highlight(e.notes, q) + '</p></div>';
-    if (e.intention) extra += '<div class="entry-section"><p class="entry-section-label">INTENTION</p><p class="entry-a" style="color:var(--accentL)">' + highlight(e.intention, q) + '</p></div>';
+    if (e.intention) {
+      const kb = { yes: ' <span style="color:var(--green)">✓ ทำได้</span>',
+                   partial: ' <span style="color:var(--yellow)">~ ทำได้บางส่วน</span>',
+                   no: ' <span style="color:var(--red)">✕ ไม่ได้ทำ</span>' }[e.intentionKept] || '';
+      extra += '<div class="entry-section"><p class="entry-section-label">INTENTION' + kb + '</p><p class="entry-a" style="color:var(--accentL)">' + highlight(e.intention, q) + '</p></div>';
+    }
     html += '<details' + (q ? ' open' : '') + ' data-date="' + e.date + '">' +
       '<summary><div><div class="entry-date">' + fmtShort(e.date) + (e.quick ? ' ⚡' : '') + (e.private ? ' 🔒' : '') + '</div>' +
       '<div class="entry-scores"><span class="entry-score">⚡' + e.energy + '</span>' +
