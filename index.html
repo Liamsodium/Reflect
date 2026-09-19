@@ -46,8 +46,14 @@
     .streak { color: var(--orange); margin-top: 3px; font-size: 11px; }
 
     /* Tabs */
-    .tabs { display: flex; margin-top: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs-wrap { position: relative; margin-top: 18px; }
+    .tabs { display: flex; margin-top: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .tabs::-webkit-scrollbar { display: none; }
+    .tabs-fade { position: absolute; top: 0; bottom: 0; width: 34px; pointer-events: none;
+      display: flex; align-items: center; font-size: 15px; color: var(--accentL); opacity: 0; transition: opacity 0.15s; }
+    .tabs-fade.show { opacity: 1; }
+    .tabs-fade.right { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--bg) 45%, transparent); padding-right: 1px; }
+    .tabs-fade.left  { left: 0;  justify-content: flex-start; background: linear-gradient(to right, var(--bg) 45%, transparent); padding-left: 1px; }
     .tab-btn { flex-shrink: 0; padding: 10px 13px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-family: 'DM Mono', monospace; letter-spacing: 0.07em; transition: all 0.15s; white-space: nowrap; }
     .tab-btn.active { border-bottom-color: var(--accent); color: var(--accentL); }
 
@@ -136,6 +142,16 @@
     .cal-cell.has:active { transform: scale(0.82); }
     .cal-cell-empty { background: transparent !important; }
     .chip { display: inline-block; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--btn-text); font-size: 12px; margin: 0 6px 6px 0; cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
+    /* สเกล 1-5 แบบวงกลมเติมทีละขั้น — แตะครั้งเดียวจบ */
+    .sc-row { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; margin-top: 10px; }
+    .sc-opt { flex: 1; background: none; border: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: 'Sarabun', sans-serif; }
+    .sc-dot { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--btn-border); background: var(--btn-bg); position: relative; overflow: hidden; transition: all 0.15s; }
+    .sc-dot i { position: absolute; left: 0; right: 0; bottom: 0; display: block; background: var(--dim); transition: background 0.15s; }
+    .sc-opt.on .sc-dot { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.18); }
+    .sc-opt.on .sc-dot i { background: var(--accent); }
+    .sc-lab { font-size: 10.5px; color: var(--muted); line-height: 1.3; text-align: center; }
+    .sc-opt.on .sc-lab { color: var(--accentL); }
+    .sc-opt:active .sc-dot { transform: scale(0.92); }
     .chip.chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
     .bar-wrap.clickable { cursor: pointer; }
     .bar-wrap.clickable:active .bar-fill { opacity: 0.5; }
@@ -284,6 +300,20 @@
   </div>
 </div>
 
+<!-- ตรวจ 🔒 ก่อน export แบบแชร์ได้ — โชว์เฉพาะตอนมีรายการใหม่ตั้งแต่ครั้งก่อน -->
+<div id="export-review-modal" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0;margin-bottom:12px">
+    <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.07em">เช็คก่อน export แบบแชร์ได้</span>
+    <button class="guide-close" style="position:static;flex-shrink:0" onclick="closeExportReviewModal()" aria-label="ปิด">✕</button>
+  </div>
+  <p class="settings-note" style="flex-shrink:0;margin-bottom:12px">รายการใหม่ตั้งแต่ export แบบแชร์ได้ครั้งก่อน — ติ๊ก 🔒 อันไหนที่ไม่อยากให้ติดไปด้วย</p>
+  <div id="export-review-list" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+  <div class="settings-row" style="flex-shrink:0;padding-top:14px">
+    <button class="btn-primary" onclick="confirmExportReview()">ส่งออกเลย</button>
+    <button class="btn-small" onclick="closeExportReviewModal()">ยกเลิก</button>
+  </div>
+</div>
+
 <div id="welcome" class="hidden">
   <button id="guide-close" class="guide-close hidden" onclick="closeGuide()" aria-label="ปิด">✕</button>
   <div class="w-inner">
@@ -359,21 +389,41 @@
         <div id="streak-line" class="streak"></div>
       </div>
     </div>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="write">✍ เขียน</button>
-      <button class="tab-btn" data-tab="chart">📊 กราฟ</button>
-      <button class="tab-btn" data-tab="history">◷ ย้อนหลัง</button>
-      <button class="tab-btn" data-tab="extra">📝 เสริม</button>
-      <button class="tab-btn" data-tab="settings">⚙ ตั้งค่า</button>
-      <button class="tab-btn" data-tab="tips">💡 Tips</button>
-      <button class="tab-btn" data-tab="feedback">💬 Feedback &amp; Share</button>
+    <div class="tabs-wrap">
+      <div class="tabs" id="tabs-row">
+        <button class="tab-btn active" data-tab="checkin">🌅 เช้า/ก่อนนอน</button>
+        <button class="tab-btn" data-tab="write">✍ เขียน</button>
+        <button class="tab-btn" data-tab="chart">📊 กราฟ</button>
+        <button class="tab-btn" data-tab="history">◷ ย้อนหลัง</button>
+        <button class="tab-btn" data-tab="extra">📝 เสริม</button>
+        <button class="tab-btn" data-tab="settings">⚙ ตั้งค่า</button>
+        <button class="tab-btn" data-tab="tips">💡 Tips</button>
+        <button class="tab-btn" data-tab="feedback">💬 Feedback &amp; Share</button>
+      </div>
+      <div class="tabs-fade left" id="tabs-fade-left">‹</div>
+      <div class="tabs-fade right" id="tabs-fade-right">›</div>
     </div>
   </div>
 
   <div id="body">
 
     <!-- WRITE -->
-    <div id="tab-write" class="anim">
+    <div id="tab-checkin" class="anim">
+      <div class="mode-switch">
+        <button class="mode-btn" id="ci-m" onclick="setCheckinSession('m')">🌅 ตอนเช้า</button>
+        <button class="mode-btn" id="ci-n" onclick="setCheckinSession('n')">🌙 ก่อนนอน</button>
+      </div>
+      <div class="mode-hint" id="ci-hint"></div>
+      <div id="checkin-form"></div>
+      <div class="card mt-12">
+        <button class="btn-primary" id="ci-save" onclick="saveCheckin()">บันทึก</button>
+        <p class="settings-note" id="ci-status" style="margin-top:8px"></p>
+      </div>
+      <span class="lbl mt-12" style="display:block">ที่ผ่านมา</span>
+      <div id="checkin-history"></div>
+    </div>
+
+    <div id="tab-write" class="anim hidden">
 
       <div id="alert-card" class="card hidden" style="border-color:rgba(234,179,8,0.35);background:rgba(234,179,8,0.07)">
         <div style="font-size:13px;color:#fde68a;line-height:1.7" id="alert-text"></div>
@@ -523,6 +573,7 @@
     <!-- HISTORY -->
     <div id="tab-history" class="anim hidden">
       <input class="search-box" id="search-input" type="search" placeholder="ค้นหา… เช่น สอบ, ว่ายน้ำ, เหนื่อย" oninput="renderHistory()" />
+      <div id="theme-chips" style="display:flex;flex-wrap:wrap;margin-bottom:4px"></div>
       <div style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:11px 13px;margin:0 0 14px;font-size:13px;color:#fde68a;line-height:1.6">✎ แตะที่บันทึกเพื่อเปิดอ่าน แล้วกด <strong>✎ แก้ไข</strong> เพื่อกลับไปแก้ได้ทุกเมื่อ ไม่จำกัดเวลา</div>
       <span class="lbl" id="history-count">0 entries</span>
       <div id="history-list"></div>
@@ -536,7 +587,7 @@
         <p class="settings-text">Export จะเก็บ <strong style="color:var(--text)">ทุกอย่าง</strong> — entries, การตั้งค่า และร่างที่ยังไม่บันทึก ไว้ในไฟล์เดียว พอมีเวอร์ชันใหม่ของแอป กด Import ไฟล์นี้กลับมาก็ได้ทุกอย่างคืนครบ</p>
         <div class="info-box">
           <strong style="color:var(--text)">ควร export เมื่อไหร่</strong><br>
-          • ทุกสิ้นเดือน เก็บไว้ใน iCloud Drive / Google Drive<br>
+          • ทุกสัปดาห์ เก็บไว้ใน iCloud Drive / Google Drive<br>
           • ก่อนเปลี่ยนมือถือเครื่องใหม่<br>
           • ก่อนล้างประวัติเบราว์เซอร์<br><br>
           <strong style="color:var(--green)">ไม่ต้อง export ตอนแอปอัปเดตเวอร์ชัน</strong> — ตัวแอปกับข้อมูลเก็บแยกกัน อัปเดตกี่ครั้งข้อมูลก็อยู่ครบ
@@ -660,7 +711,7 @@
           <li><strong>ลืมเขียนเมื่อวาน? ย้อนได้</strong><br>ในหน้าเขียน กดปุ่ม ‹ หรือเลือกวันที่ด้านบน เขียนย้อนหลังได้ทุกวัน — พลาดวันไม่ได้แปลว่าต้องเลิก</li>
           <li><strong>ไม่ต้องตอบให้ครบทุกคำถาม</strong><br>ข้อไหนไม่มีอะไรจะเขียน เว้นไว้ได้ ไม่ต้องฝืนหาเรื่องมาเขียน</li>
           <li><strong>ใช้ช่องค้นหาในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียว เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
-          <li><strong>Export ทุกสิ้นเดือน</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
+          <li><strong>Export ทุกสัปดาห์</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
           <li><strong>อ่านย้อนหลังบ้าง ไม่ใช่แค่เขียน</strong><br>เปิดดู 1 เดือนก่อนแล้วเทียบกับวันนี้ จะเห็นสิ่งที่ตอนอยู่ในนั้นมองไม่เห็น</li>
         </ul>
         <div class="mt-14">
@@ -707,8 +758,8 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.16';
-const BUILD_DATE  = '18 ก.ย. 69';
+const APP_VERSION = '9.26';
+const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
 // │  ใส่ลิงก์ Google Form ของคุณตรงนี้ (แก้ที่เดียวจบ)         │
@@ -777,6 +828,131 @@ const PROMPTS = [
   'มีเรื่องยากในอดีตที่ตอนนี้มองย้อนกลับไปแล้ว รู้สึกว่ามันทำให้ฉันเข้มแข็งหรือเข้าใจอะไรบางอย่างมากขึ้นไหม?',
 ];
 
+// หมวดของแต่ละคำถาม เรียง index ตรงกับ PROMPTS เป๊ะ (PROMPT_TAGS[i] = หมวดของ PROMPTS[i])
+// กฎเหล็ก: เพิ่มคำถามใหม่ = ต่อท้าย PROMPTS และต่อท้าย PROMPT_TAGS พร้อมกัน ห้ามแทรกกลาง/ลบ/สลับ
+// เลข // ข้อ N คือลำดับ 1-45 ตามลิสต์ที่เช็คไว้ (N = index + 1)
+const PROMPT_TAGS = [
+  'อารมณ์ความรู้สึก',        // ข้อ 1  วันนี้ฉันรู้สึกอย่างไร
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 2  ภูมิใจในตัวเองวันนี้
+  'การรับมือกับเรื่องยาก',   // ข้อ 3  สิ่งที่ท้าทายที่สุด รับมืออย่างไร
+  'บทเรียนและการเติบโต',     // ข้อ 4  บอกอะไรกับตัวเองในอดีต
+  'อารมณ์ความรู้สึก',        // ข้อ 5  อะไรให้/ดูดพลังงาน
+  'การรับมือกับเรื่องยาก',   // ข้อ 6  กำลังหลีกเลี่ยงสิ่งใด
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 7  ดูแลตัวเองดีพอไหม
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 8  อยากปล่อยวางแต่ยังทำไม่ได้
+  'เป้าหมายและทิศทาง',       // ข้อ 9  ถ้าความกลัวไม่มี จะทำอะไรต่าง
+  'ตัวตนและสิ่งที่สำคัญ',    // ข้อ 10 อะไรทำให้รู้สึกมีชีวิตชีวา
+  'ตัวตนและสิ่งที่สำคัญ',    // ข้อ 11 นิยามความสำเร็จ
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 12 เสียงในหัวที่พูดแง่ลบ
+  'ร่างกายและสุขภาพ',        // ข้อ 13 รู้สึกอย่างไรกับร่างกาย/สุขภาพ
+  'ความสัมพันธ์',            // ข้อ 14 เชื่อมต่อกับคนรอบข้าง/โดดเดี่ยว
+  'เป้าหมายและทิศทาง',       // ข้อ 15 อยากทำแต่ยังไม่ลงมือ
+  'เป้าหมายและทิศทาง',       // ข้อ 16 อยากรู้สึกอย่างไรสัปดาห์นี้
+  'บทเรียนและการเติบโต',     // ข้อ 17 ได้เรียนรู้อะไรช่วงนี้
+  'เป้าหมายและทิศทาง',       // ข้อ 18 สิ่งใหม่ที่อยากลองแต่ลังเล
+  'การอยู่กับปัจจุบัน',      // ข้อ 19 สามสิ่งที่ขอบคุณวันนี้
+  'ความสัมพันธ์',            // ข้อ 20 สามคนที่ขอบคุณในชีวิต
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 21 habit ที่ดีกับตัวเอง
+  'ตัวตนและสิ่งที่สำคัญ',    // ข้อ 22 ได้เป็นตัวเองแท้จริงช่วงไหน
+  'ความสัมพันธ์',            // ข้อ 23 คนสำคัญในชีวิต ดูแลดีพอไหม
+  'ตัวตนและสิ่งที่สำคัญ',    // ข้อ 24 สิ่งที่ทำตรงกับสิ่งที่ให้ความสำคัญไหม
+  'เป้าหมายและทิศทาง',       // ข้อ 25 วันในฝันเป็นอย่างไร
+  'การอยู่กับปัจจุบัน',      // ข้อ 26 อยากฉลองให้ตัวเอง
+  'การอยู่กับปัจจุบัน',      // ข้อ 27 สัปดาห์นี้ in/out กับอะไร
+  'เป้าหมายและทิศทาง',       // ข้อ 28 intention ที่โฟกัสในปีนี้
+  'การรับมือกับเรื่องยาก',   // ข้อ 29 อะไรทำให้กลัว/กังวล ควบคุมได้ไหม
+  'เป้าหมายและทิศทาง',       // ข้อ 30 เป้าหมายหลัก 3 ข้อ
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 31 ทำอะไรให้ inner child
+  'เป้าหมายและทิศทาง',       // ข้อ 32 อีก 3 ปีอยากเป็นแบบไหน
+  'การอยู่กับปัจจุบัน',      // ข้อ 33 ช่วงไหนที่อยู่กับตรงนั้นจริงๆ
+  'การอยู่กับปัจจุบัน',      // ข้อ 34 ครั้งล่าสุดที่หัวเราะ/สนุกจริงๆ
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 35 เผลอเปรียบเทียบตัวเองกับใคร
+  'การรับมือกับเรื่องยาก',   // ข้อ 36 ปฏิเสธ/บอกไม่ได้แม้จะยาก
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 37 ยังโทษตัวเอง ถึงเวลาให้อภัย
+  'การเห็นคุณค่าในตัวเอง',   // ข้อ 38 ถ้าเพื่อนเจอปัญหาเดียวกันจะพูดอะไร
+  'ร่างกายและสุขภาพ',        // ข้อ 39 เหนื่อยล้า/อ่อนเพลียไหม
+  'ร่างกายและสุขภาพ',        // ข้อ 40 ร่างกายอยากให้ทำอะไรมากที่สุด
+  'ความสัมพันธ์',            // ข้อ 41 อยากบอกรัก/ขอบคุณครอบครัว
+  'ความสัมพันธ์',            // ข้อ 42 เพื่อนที่นานๆ ไม่ได้คุย อยากทัก
+  'ความสัมพันธ์',            // ข้อ 43 อยากชม/ขอบคุณใครเป็นพิเศษ
+  'ความสัมพันธ์',            // ข้อ 44 ขัดแย้งกับคนใกล้ตัว หนี/สู้/เงียบ/ยอม
+  'บทเรียนและการเติบโต',     // ข้อ 45 เรื่องยากในอดีตที่ทำให้เข้มแข็งขึ้น
+];
+
+// กันพลาด: PROMPT_TAGS ต้องยาวเท่า PROMPTS เสมอ ไม่งั้นหมวดจะเพี้ยนแบบเงียบ ๆ
+if (PROMPT_TAGS.length !== PROMPTS.length) {
+  console.error('[Reflect] PROMPT_TAGS (' + PROMPT_TAGS.length + ') ไม่เท่ากับ PROMPTS (' + PROMPTS.length + ') — หมวดคำถามจะเพี้ยน');
+}
+
+// ===== ชุดคำถามเช้า / เย็น =====
+// เช้า = เตรียมใจ ตั้งใจ · เย็น = ทบทวนวันที่ผ่านมา
+// แต่ละชุดมี tag ของตัวเอง เพราะ index ของมันคนละชุดกับ PROMPTS หลัก
+const MORNING_PROMPTS = [
+  'วันนี้อยากให้ตัวเองรู้สึกยังไง?',
+  'สิ่งเดียวที่ถ้าทำได้วันนี้ จะถือว่าวันนี้ดีพอแล้ว คืออะไร?',
+  'เมื่อคืนนอนเป็นยังไง แล้ววันนี้ร่างกายพร้อมแค่ไหน?',
+  'วันนี้มีอะไรที่กังวลล่วงหน้าอยู่ไหม?',
+  'วันนี้อยากใจดีกับตัวเองเรื่องไหนเป็นพิเศษ?',
+  'ถ้าวันนี้จะมีเรื่องให้หงุดหงิด น่าจะเป็นเรื่องอะไร แล้วจะรับมือยังไง?',
+  'วันนี้มีใครที่อยากทักหรือใส่ใจเป็นพิเศษไหม?',
+  'ตอนนี้ในหัวมีอะไรค้างอยู่ก่อนเริ่มวัน?',
+  'วันนี้อยากให้ตัวเองโฟกัสกับอะไรมากที่สุด?',
+  'ถ้าวันนี้เหนื่อยขึ้นมา จะให้อะไรกับตัวเองเป็นรางวัล?',
+];
+const MORNING_TAGS = [
+  'อารมณ์ความรู้สึก',        // ช.1
+  'เป้าหมายและทิศทาง',       // ช.2
+  'ร่างกายและสุขภาพ',        // ช.3
+  'การรับมือกับเรื่องยาก',   // ช.4
+  'การเห็นคุณค่าในตัวเอง',   // ช.5
+  'การรับมือกับเรื่องยาก',   // ช.6
+  'ความสัมพันธ์',            // ช.7
+  'อารมณ์ความรู้สึก',        // ช.8
+  'เป้าหมายและทิศทาง',       // ช.9
+  'การเห็นคุณค่าในตัวเอง',   // ช.10
+];
+const EVENING_PROMPTS = [
+  'วันนี้เป็นยังไงบ้าง อะไรที่ยังติดอยู่ในใจ?',
+  'วันนี้มีช่วงไหนที่รู้สึกดีที่สุด?',
+  'วันนี้มีอะไรที่อยากทำแต่ไม่ได้ทำ เพราะอะไร?',
+  'วันนี้ได้เรียนรู้อะไรเกี่ยวกับตัวเองบ้าง?',
+  'วันนี้ร่างกายบอกอะไรบ้าง เหนื่อยตรงไหน?',
+  'วันนี้มีใครที่อยากขอบคุณไหม?',
+  'ถ้าย้อนวันนี้ได้ อยากทำอะไรต่างออกไป?',
+  'วันนี้ให้อภัยตัวเองเรื่องอะไรได้บ้าง?',
+  'วันนี้มีเรื่องเล็กๆ อะไรที่อยากจำไว้?',
+  'พรุ่งนี้อยากให้ต่างจากวันนี้ตรงไหน?',
+];
+const EVENING_TAGS = [
+  'อารมณ์ความรู้สึก',        // ย.1
+  'การอยู่กับปัจจุบัน',      // ย.2
+  'การรับมือกับเรื่องยาก',   // ย.3
+  'บทเรียนและการเติบโต',     // ย.4
+  'ร่างกายและสุขภาพ',        // ย.5
+  'ความสัมพันธ์',            // ย.6
+  'บทเรียนและการเติบโต',     // ย.7
+  'การเห็นคุณค่าในตัวเอง',   // ย.8
+  'การอยู่กับปัจจุบัน',      // ย.9
+  'เป้าหมายและทิศทาง',       // ย.10
+];
+// ===== เตรียมตัวตอนเช้า / ก่อนนอน =====
+// สเกล 1-5 แบบมีคำกำกับ ไม่ใช่ตัวเลขลอย ๆ — เลือกครั้งเดียวจบ ไม่ต้องลากสไลเดอร์
+const CHECKIN_SCALES = {
+  sleep:      { q: 'เมื่อคืนนอนเป็นยังไง?',        labels: ['แย่มาก','ไม่ค่อยดี','พอใช้','ดี','ดีมาก'] },
+  energy:     { q: 'ตอนนี้มีแรงแค่ไหน?',          labels: ['หมดแรง','เหนื่อย','พอไหว','มีแรง','เต็มพลัง'] },
+  productive: { q: 'วันนี้ได้ทำอะไรเป็นชิ้นเป็นอันแค่ไหน?', labels: ['แทบไม่ได้ทำ','ได้นิดหน่อย','พอสมควร','ได้เยอะ','ได้เต็มที่'] },
+  stress:     { q: 'วันนี้เครียดแค่ไหน?',          labels: ['สบายมาก','ค่อนข้างสบาย','กลาง ๆ','ค่อนข้างเครียด','เครียดมาก'] },
+};
+// สิ่งที่อยากให้วันนี้มี / วันนี้มีอะไรบ้าง — แตะเลือกได้หลายอัน
+const CHECKIN_AREAS = ['งาน/เรียน','ดูแลตัวเอง','คนรอบตัว','งานอดิเรก','งานบ้าน','เรียนรู้','ความสนุก','พักผ่อน','ธรรมชาติ','สุขภาพ','ครอบครัว','การเงิน','ออกกำลังกาย','จิตใจ'];
+const K_CHECKINS = 'reflect_checkins_v1';
+// ทะเบียนชุดคำถาม — ใช้แปลง index ของแต่ละชุดเป็นหมวดให้ถูกตัว
+// 'main' = ไม่มี src (บันทึกเก่าก่อนมีเช้า/เย็น) จึงต้องรองรับทั้ง undefined และ 'main'
+const TAGS_BY_SRC = { main: PROMPT_TAGS, m: MORNING_TAGS, e: EVENING_TAGS };
+if (MORNING_TAGS.length !== MORNING_PROMPTS.length || EVENING_TAGS.length !== EVENING_PROMPTS.length) {
+  console.error('[Reflect] ชุดคำถามเช้า/เย็นกับ tag ยาวไม่เท่ากัน — หมวดจะเพี้ยน');
+}
+
 // คลังคำถามโหมดรีบ — สั้น ตอบได้ไม่กี่วินาที แยกจาก PROMPTS หลักตั้งใจ
 const QUICK_PROMPTS = [
   'วันนี้ให้คะแนนตัวเองกี่เต็ม 10?',
@@ -798,12 +974,14 @@ const QUICK_PROMPTS = [
 
 // ── State ──
 let entries = [];
-let prefs = { quickMode: false, seenWelcome: false, lastExport: null, schema: SCHEMA };
+let prefs = { quickMode: false, seenWelcome: false, lastExport: null, lastShareableExport: null, schema: SCHEMA };
 let sliders = {};
 let tracker = { sleep: false, exercise: false, social: false };
 let answers = ['', '', ''];
 let lastMD = '';
 let activeDate = null;   // วันที่กำลังเขียนอยู่ (null = ยังไม่ init)
+let checkinSession = 'm';   // 'm' เช้า / 'n' ก่อนนอน — ใช้เฉพาะแท็บเช้า/ก่อนนอน ไม่ยุ่งกับโหมดเขียน
+let checkinDraft = {};      // ค่าที่กำลังกรอกอยู่ในฟอร์ม
 
 function freshSliders() {
   return {
@@ -876,13 +1054,15 @@ function dealForDay(len, dayIdx, perDay, salt) {
 }
 function promptsForDay(d) {
   return dealForDay(PROMPTS.length, dayIndex(d), PROMPTS_PER_DAY, 0)
-    .map(function (i) { return { index: i, text: PROMPTS[i] }; });
+    .map(function (i) { return { index: i, text: PROMPTS[i], src: 'main' }; });
 }
 function quickPromptForDay(d) {
   const i = dealForDay(QUICK_PROMPTS.length, dayIndex(d), 1, 777)[0];
   return { index: i, text: QUICK_PROMPTS[i], quick: true };
 }
 // ใช้จุดเดียวทั้งตอนแสดงคำถามและตอนบันทึก กันคำถามที่โชว์กับที่เก็บไม่ตรงกัน
+// ใช้จุดเดียวทั้งตอนแสดงคำถามและตอนบันทึก กันคำถามที่โชว์กับที่เก็บไม่ตรงกัน
+// โหมดรีบไม่แยกเช้า/เย็น — ตั้งใจให้เป็นทางลัดจริง ๆ ไม่ต้องเลือกอะไรเพิ่ม
 function activePromptsForDay(d) {
   return prefs.quickMode ? [quickPromptForDay(d)] : promptsForDay(d);
 }
@@ -1050,8 +1230,13 @@ function saveEntries() {
     return false;
   }
 }
+// นับทุกช่องที่แอปเขียนจริง ไม่ใช่แค่ entries — ไม่งั้นตัวเลข "พื้นที่ใช้" ต่ำกว่าความจริง
+// (K_EXTRA / K_EXTRA_DRAFT ประกาศทีหลังในไฟล์ แต่ฟังก์ชันนี้ถูกเรียกหลังโหลดเสร็จ จึงอ้างถึงได้)
 function dataChars() {
-  try { return (localStorage.getItem(K_ENTRIES) || '').length; } catch (err) { return 0; }
+  try {
+    return [K_ENTRIES, K_DRAFTS, K_DRAFT, K_PREFS, K_EXTRA, K_EXTRA_DRAFT, K_CHECKINS]
+      .reduce(function (sum, k) { return sum + ((localStorage.getItem(k) || '').length); }, 0);
+  } catch (err) { return 0; }
 }
 function storagePct() { return dataChars() / QUOTA_CHARS; }
 
@@ -1344,7 +1529,11 @@ function handleSubmit() {
   entries = entries.filter(e => e.date !== target);
   entries.push(entry);
   entries.sort((a,b) => a.date.localeCompare(b.date));
-  saveEntries();
+  if (!saveEntries()) {   // เซฟไม่ผ่าน = ห้ามล้างร่าง/ห้ามเปลี่ยนหน้า ไม่งั้นข้อความหายเกลี้ยง
+    entries = entries.filter(e => e.date !== target);
+    if (prevSaved) { entries.push(prevSaved); entries.sort((a,b) => a.date.localeCompare(b.date)); }
+    return;
+  }
   clearDraft(target);
   lastMD = generateMD(entry);
   document.getElementById('md-output').textContent = lastMD;
@@ -1507,20 +1696,32 @@ function openThrowback() {
 }
 
 // ── Tabs ──
+// ลูกศรบอกว่าเลื่อนแถบแท็บได้อีก — ซ่อน scrollbar ไว้เพื่อความสวย แต่ถ้าไม่มีสัญญาณอะไรเลย คนจะไม่รู้ว่าเลื่อนได้
+function updateTabsFade() {
+  const row = document.getElementById('tabs-row');
+  const l = document.getElementById('tabs-fade-left');
+  const r = document.getElementById('tabs-fade-right');
+  if (!row || !l || !r) return;
+  const maxScroll = row.scrollWidth - row.clientWidth;
+  l.classList.toggle('show', maxScroll > 4 && row.scrollLeft > 2);
+  r.classList.toggle('show', maxScroll > 4 && row.scrollLeft < maxScroll - 2);
+}
 function switchTab(tab) {
   if (tab === 'write' && isReadOnly()) tab = 'history';   // โหมดอ่านอย่างเดียว: ไม่ให้เข้าแท็บเขียนเลย
   document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
-  ['write','chart','history','settings','extra','tips','feedback'].forEach(function (id) {
+  ['checkin','write','chart','history','settings','extra','tips','feedback'].forEach(function (id) {
     const el = document.getElementById('tab-' + id);
     if (el) el.classList.toggle('hidden', id !== tab);
   });
   document.getElementById('tab-submitted').classList.add('hidden');
   window.scrollTo(0, 0);
+  if (tab === 'checkin') renderCheckin();
   if (tab === 'chart') renderChart();
   if (tab === 'extra') renderExtraNotes();
   if (tab === 'history') renderHistory();
   if (tab === 'settings') renderSettings();
   if (tab === 'feedback') { renderReview(); renderFeedback(); }
+  setTimeout(updateTabsFade, 50);   // เผื่อ browser auto-scroll แท็บที่กดไว้เข้ามาในจอ
 }
 
 // ═══ สรุปรายสัปดาห์ — คำนวณในเครื่องทั้งหมด ไม่ส่งข้อมูลออกไปไหน ═══
@@ -1810,8 +2011,9 @@ function closeMonthReview() {
 
 // ── History + search ──
 function entryText(e) {
-  return [(e.answers || []).join(' '), e.notes || '', e.intention || '',
-    (e.prompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' ')].join(' ').toLowerCase();
+  return [(e.answers || []).join(' '), (e.morningAnswers || []).join(' '), e.notes || '', e.intention || '',
+    (e.prompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' '),
+    (e.morningPrompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' ')].join(' ').toLowerCase();
 }
 function highlight(text, q) {
   const safe = esc(text);
@@ -1821,7 +2023,247 @@ function highlight(text, q) {
     return safe.replace(re, '<mark>$1</mark>');
   } catch (err) { return safe; }
 }
+// ===== เตรียมตัวตอนเช้า / ก่อนนอน — เก็บแยกจาก entries คนละชุดข้อมูล =====
+function loadCheckins() {
+  try {
+    const raw = localStorage.getItem(K_CHECKINS);
+    const a = raw ? JSON.parse(raw) : [];
+    return Array.isArray(a) ? a : [];
+  } catch (err) { return []; }
+}
+function saveCheckinsArr(arr) {
+  try { localStorage.setItem(K_CHECKINS, JSON.stringify(arr)); return true; }
+  catch (err) {
+    alert('⚠️ บันทึกไม่สำเร็จ — พื้นที่เก็บข้อมูลเต็ม\n\nคัดลอกข้อความเก็บไว้ก่อน แล้วไป ตั้งค่า → export ทั้งหมด');
+    return false;
+  }
+}
+function findCheckin(date, session) {
+  return loadCheckins().find(function (c) { return c.date === date && c.session === session; });
+}
+function autoCheckinSession() { return new Date().getHours() < 15 ? 'm' : 'n'; }
+function setCheckinSession(s) {
+  checkinSession = (s === 'm') ? 'm' : 'n';
+  renderCheckin();
+}
+// แตะสเกล 1-5
+function setScale(key, val) {
+  checkinDraft[key] = (checkinDraft[key] === val) ? null : val;  // แตะซ้ำ = ยกเลิก
+  renderCheckinForm();
+}
+function toggleArea(a) {
+  const list = checkinDraft.areas || [];
+  const i = list.indexOf(a);
+  if (i === -1) list.push(a); else list.splice(i, 1);
+  checkinDraft.areas = list;
+  renderCheckinForm();
+}
+function scaleHtml(key) {
+  const sc = CHECKIN_SCALES[key];
+  const cur = checkinDraft[key];
+  let h = '<div class="card"><p class="prompt-text">' + esc(sc.q) + '</p><div class="sc-row">';
+  sc.labels.forEach(function (lab, i) {
+    const v = i + 1;
+    const fill = Math.round((v / 5) * 100);
+    h += '<button class="sc-opt' + (cur === v ? ' on' : '') + '" onclick="setScale(\'' + key + '\',' + v + ')">' +
+         '<span class="sc-dot"><i style="height:' + fill + '%"></i></span>' +
+         '<span class="sc-lab">' + esc(lab) + '</span></button>';
+  });
+  return h + '</div></div>';
+}
+function textCardHtml(key, label, placeholder) {
+  return '<div class="card"><p class="prompt-text">' + esc(label) + '</p>' +
+    '<textarea id="ci-' + key + '" placeholder="' + esc(placeholder) + '">' + esc(checkinDraft[key] || '') + '</textarea></div>';
+}
+function renderCheckinForm() {
+  const m = checkinSession === 'm';
+  let h = '';
+  if (m) {
+    h += scaleHtml('sleep');
+    h += '<div class="card"><p class="prompt-text">วันนี้อยากให้มีอะไรบ้าง?</p>' +
+         '<p class="settings-note" style="margin:0 0 8px">แตะเลือกได้หลายอัน ไม่เลือกก็ได้</p><div>';
+    CHECKIN_AREAS.forEach(function (a) {
+      const on = (checkinDraft.areas || []).indexOf(a) !== -1;
+      h += '<button class="chip' + (on ? ' chip-active' : '') + '" onclick="toggleArea(\'' + esc(a) + '\')">' + esc(a) + '</button>';
+    });
+    h += '</div></div>';
+    h += textCardHtml('plan', 'วันนี้ตั้งใจจะทำอะไร?', 'วันนี้ฉันจะ...');
+  } else {
+    h += scaleHtml('energy');
+    h += scaleHtml('productive');
+    h += scaleHtml('stress');
+    h += textCardHtml('feeling', 'วันนี้รู้สึกยังไง อธิบายเป็นคำสั้น ๆ', 'เช่น เหนื่อย สงบ สับสน');
+    h += textCardHtml('summary', 'สรุปวันนี้สั้น ๆ', 'วันนี้เกิดอะไรขึ้นบ้าง...');
+  }
+  document.getElementById('checkin-form').innerHTML = h;
+  // ผูก textarea กลับเข้า draft
+  ['plan','feeling','summary'].forEach(function (k) {
+    const el = document.getElementById('ci-' + k);
+    if (!el) return;
+    el.addEventListener('input', function (ev) { checkinDraft[k] = ev.target.value; autoGrow(ev.target); });
+    autoGrow(el);
+  });
+}
+function renderCheckin() {
+  const m = checkinSession === 'm';
+  document.getElementById('ci-m').classList.toggle('active', m);
+  document.getElementById('ci-n').classList.toggle('active', !m);
+  document.getElementById('ci-hint').textContent = m
+    ? 'ตั้งต้นวันให้ชัด ใช้เวลาไม่ถึงนาที'
+    : 'ปิดวันด้วยการทบทวนสั้น ๆ';
+  // โหลดของที่บันทึกไว้แล้วของวันนี้ (ถ้ามี) มาแก้ต่อได้
+  const existing = findCheckin(todayKey(), checkinSession);
+  checkinDraft = existing ? Object.assign({}, existing) : {};
+  if (!checkinDraft.areas) checkinDraft.areas = [];
+  const st = document.getElementById('ci-status');
+  if (st) st.textContent = existing ? '✓ บันทึกของวันนี้ไว้แล้ว — แก้แล้วกดบันทึกซ้ำได้' : '';
+  const sv = document.getElementById('ci-save');
+  if (sv) sv.classList.toggle('hidden', isReadOnly());
+  renderCheckinForm();
+  renderCheckinHistory();
+}
+function saveCheckin() {
+  if (isReadOnly()) return;
+  const rec = Object.assign({}, checkinDraft, {
+    date: todayKey(), session: checkinSession, savedAt: new Date().toISOString()
+  });
+  const keys = checkinSession === 'm' ? ['sleep','areas','plan'] : ['energy','productive','stress','feeling','summary'];
+  const filled = keys.some(function (k) {
+    const v = rec[k];
+    return Array.isArray(v) ? v.length : (v != null && String(v).trim() !== '');
+  });
+  if (!filled) { alert('ยังไม่ได้กรอกอะไรเลย'); return; }
+  const list = loadCheckins().filter(function (c) { return !(c.date === rec.date && c.session === rec.session); });
+  list.push(rec);
+  list.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : (a.session < b.session ? -1 : 1)); });
+  if (!saveCheckinsArr(list)) return;
+  document.getElementById('ci-status').textContent = '✓ บันทึกแล้ว';
+  renderCheckinHistory();
+}
+function renderCheckinHistory() {
+  const el = document.getElementById('checkin-history');
+  if (!el) return;
+  const list = loadCheckins().slice().reverse().slice(0, 14);
+  if (!list.length) { el.innerHTML = '<p class="empty" style="padding:8px 0">ยังไม่มีบันทึก</p>'; return; }
+  let h = '';
+  list.forEach(function (c) {
+    const m = c.session === 'm';
+    const bits = [];
+    if (m) {
+      if (c.sleep) bits.push('นอน: ' + CHECKIN_SCALES.sleep.labels[c.sleep - 1]);
+      if (c.areas && c.areas.length) bits.push(c.areas.join(' · '));
+      if (c.plan) bits.push(c.plan);
+    } else {
+      if (c.energy) bits.push('แรง: ' + CHECKIN_SCALES.energy.labels[c.energy - 1]);
+      if (c.productive) bits.push('ได้งาน: ' + CHECKIN_SCALES.productive.labels[c.productive - 1]);
+      if (c.stress) bits.push('เครียด: ' + CHECKIN_SCALES.stress.labels[c.stress - 1]);
+      if (c.feeling) bits.push(c.feeling);
+      if (c.summary) bits.push(c.summary);
+    }
+    h += '<div class="card" style="margin-bottom:8px">' +
+      '<div class="entry-date">' + (m ? '🌅 เช้า' : '🌙 ก่อนนอน') + ' · ' + fmtShort(c.date) + '</div>' +
+      bits.map(function (b) { return '<p class="entry-a" style="margin-top:4px">' + esc(b) + '</p>'; }).join('') +
+      '</div>';
+  });
+  el.innerHTML = h;
+}
+let activeThemeTag = null; // null = มุมมองปกติ, ไม่งั้นคือชื่อหมวดที่กำลังดู
+let pendingThemeTag = null; // หมวดที่กำลังจะติดให้บันทึกเสริมที่เขียนจากหน้าหมวด
+function uniqueTags() {
+  const seen = [];
+  PROMPT_TAGS.forEach(function (t) { if (seen.indexOf(t) === -1) seen.push(t); });
+  return seen;
+}
+function setThemeTag(tag) {
+  activeThemeTag = (activeThemeTag === tag) ? null : tag; // แตะซ้ำ = กลับไปมุมมองปกติ
+  renderHistory();
+}
+function renderThemeChips() {
+  const el = document.getElementById('theme-chips');
+  if (!el) return;
+  let html = '<button class="chip' + (activeThemeTag ? '' : ' chip-active') + '" onclick="setThemeTag(null)">ทั้งหมด</button>';
+  uniqueTags().forEach(function (t) {
+    html += '<button class="chip' + (activeThemeTag === t ? ' chip-active' : '') + '" onclick="setThemeTag(\'' + esc(t) + '\')">' + esc(t) + '</button>';
+  });
+  el.innerHTML = html;
+}
+// รวมคำตอบเก่าทั้งหมดที่เคยตอบคำถามในหมวดนี้ จับคู่จาก index ของคำถามที่เก็บไว้ในบันทึกแต่ละวัน
+// ต้องดู src ด้วย เพราะ index ของชุดเช้า/เย็น/หลัก เป็นคนละชุดกัน ถ้าดูแต่ index หมวดจะสลับกันมั่ว
+function tagOfPrompt(p) {
+  if (!p || typeof p.index !== 'number') return null;
+  const table = TAGS_BY_SRC[p.src || 'main'];
+  return table ? (table[p.index] || null) : null;
+}
+function getTaggedAnswers(tag) {
+  const rows = [];
+  entries.forEach(function (e) {
+    // รวมทั้งคำถามหลัก/เย็น (เก็บใน prompts) และคำถามเช้า (เก็บแยกใน morningPrompts)
+    [[e.prompts, e.answers], [e.morningPrompts, e.morningAnswers]].forEach(function (pair) {
+      (pair[0] || []).forEach(function (p, i) {
+        if (tagOfPrompt(p) !== tag) return;
+        const a = (pair[1] && pair[1][i]) ? pair[1][i] : '';
+        if (!a.trim()) return;
+        rows.push({ date: e.date, q: p.text, a: a, intention: e.intention, intentionKept: e.intentionKept, private: e.private });
+      });
+    });
+  });
+  rows.sort(function (x, y) { return x.date < y.date ? 1 : -1; }); // ใหม่สุดก่อน
+  return rows;
+}
+function renderThemeList(tag) {
+  const rows = getTaggedAnswers(tag);
+  // บันทึกสะท้อนที่เคยเขียนไว้ในหมวดนี้ — เอามาเรียงรวมกับคำตอบเก่าตามวันที่
+  loadExtraNotes().forEach(function (n) {
+    if (n.themeTag !== tag) return;
+    rows.push({ reflection: true, id: n.id, date: n.addedAt ? localKey(new Date(n.addedAt)) : '',
+                a: n.text || '', label: n.label || '', private: !!n.private });
+  });
+  rows.sort(function (x, y) { return x.date < y.date ? 1 : -1; });
+
+  const answerCount = rows.filter(function (r) { return !r.reflection; }).length;
+  const reflCount = rows.length - answerCount;
+  document.getElementById('history-count').textContent =
+    answerCount + ' คำตอบในหมวด "' + tag + '"' + (reflCount ? ' · ' + reflCount + ' บันทึกสะท้อน' : '');
+
+  const el = document.getElementById('history-list');
+  let html = '';
+  if (!rows.length) {
+    html += '<p class="empty">ยังไม่มีคำตอบในหมวดนี้<br>ตอบคำถามหมวดนี้สักวัน แล้วกลับมาดูอีกครั้ง</p>';
+  }
+  rows.forEach(function (r) {
+    if (r.reflection) {
+      html += '<div class="card" style="margin-bottom:10px;border-color:var(--accent);background:rgba(99,102,241,0.07)">' +
+        '<div class="entry-date" style="color:var(--accentL)">🪞 สะท้อน · ' + (r.date ? fmtShort(r.date) : '') + (r.private ? ' 🔒' : '') + '</div>' +
+        (r.label ? '<p class="entry-q" style="color:var(--accentL)">' + esc(r.label) + '</p>' : '') +
+        '<p class="entry-a">' + esc(r.a) + '</p>' +
+        '<div class="mt-12 entry-actions">' +
+        '<button class="btn-small" onclick="openExtraNoteRead(\'' + r.id + '\')">↗ เปิดอ่าน</button>' +
+        (isReadOnly() ? '' : '<button class="btn-small accent" onclick="editExtraNote(\'' + r.id + '\')">✎ แก้ไข</button>') +
+        '</div></div>';
+      return;
+    }
+    const kb = { yes: ' <span style="color:var(--green)">✓ ทำได้</span>',
+                 partial: ' <span style="color:var(--yellow)">~ ทำได้บางส่วน</span>',
+                 no: ' <span style="color:var(--red)">✕ ไม่ได้ทำ</span>' }[r.intentionKept] || '';
+    html += '<div class="card" style="margin-bottom:10px">' +
+      '<div class="entry-date">' + fmtShort(r.date) + (r.private ? ' 🔒' : '') + '</div>' +
+      '<p class="entry-q">' + esc(r.q) + '</p>' +
+      '<p class="entry-a">' + esc(r.a) + '</p>' +
+      (r.intention ? '<div class="entry-section"><p class="entry-section-label">INTENTION' + kb + '</p><p class="entry-a" style="color:var(--accentL)">' + esc(r.intention) + '</p></div>' : '') +
+      '</div>';
+  });
+  // ท้ายหน้า: ชวนเขียนสะท้อนหลังอ่านทั้งหมด
+  if (!isReadOnly()) {
+    html += '<div class="card" style="margin-top:14px;border-style:dashed">' +
+      '<p style="font-size:13.5px;color:var(--dim);line-height:1.6;margin:0 0 10px">🪞 อ่านทั้งหมดนี้แล้ว ตอนนี้รู้สึกยังไง มองเห็นอะไรที่ไม่เคยเห็นไหม</p>' +
+      '<button class="btn-primary" onclick="startThemeReflection(\'' + esc(tag) + '\')">เขียนสะท้อนหมวดนี้</button>' +
+      '</div>';
+  }
+  el.innerHTML = html;
+}
 function renderHistory() {
+  renderThemeChips();
+  if (activeThemeTag) { renderThemeList(activeThemeTag); return; }
   const qEl = document.getElementById('search-input');
   const q = (qEl ? qEl.value : '').trim();
   const ql = q.toLowerCase();
@@ -1846,10 +2288,16 @@ function renderHistory() {
     const c = scoreColor(ov, 10);
     const icons = (e.tracker && e.tracker.sleep ? '😴' : '') + (e.tracker && e.tracker.exercise ? '🏃' : '') + (e.tracker && e.tracker.social ? '👥' : '');
     let qh = '';
+    (e.morningPrompts || []).forEach(function (p, pi) {
+      const a = (e.morningAnswers && e.morningAnswers[pi]) ? e.morningAnswers[pi] : '';
+      if (!a) return;
+      qh += '<p class="entry-q">☀ ' + highlight(p && p.text ? p.text : '', q) + '</p>' +
+            '<p class="entry-a">' + highlight(a, q) + '</p>';
+    });
     (e.prompts || []).forEach(function (p, pi) {
       const a = (e.answers && e.answers[pi]) ? e.answers[pi] : '';
       if (!a && pi > 0) return;
-      qh += '<p class="entry-q">' + highlight(p && p.text ? p.text : '', q) + '</p>' +
+      qh += '<p class="entry-q">' + ((p && p.src === 'e') ? '🌙 ' : '') + highlight(p && p.text ? p.text : '', q) + '</p>' +
             '<p class="entry-a">' + (a ? highlight(a, q) : '—') + '</p>';
     });
     let extra = '';
@@ -2027,7 +2475,16 @@ function loadExtraNotes() {
   } catch (err) { return []; }
 }
 function saveExtraNotesArr(arr) {
-  try { localStorage.setItem(K_EXTRA, JSON.stringify(arr)); } catch (err) {}
+  try { localStorage.setItem(K_EXTRA, JSON.stringify(arr)); return true; }
+  catch (err) {
+    alert('⚠️ บันทึกเสริมไม่สำเร็จ — พื้นที่เก็บข้อมูลเต็ม\n\n' +
+          'สิ่งที่ควรทำทันที:\n' +
+          '1. คัดลอกข้อความที่เพิ่งเขียนเก็บไว้ที่อื่นก่อน\n' +
+          '2. ไปที่ ตั้งค่า → export ทั้งหมด (เก็บไฟล์ไว้ให้ปลอดภัย)\n' +
+          '3. จากนั้นค่อยลบของเก่าออก\n\n' +
+          'อย่าเพิ่งปิดแอป ข้อความยังอยู่บนหน้าจอ');
+    return false;
+  }
 }
 // ── ร่างบันทึกเสริม (กันหายถ้าออกแอปก่อนกดบันทึก) ──
 // เก็บแยกราย id ไม่ใช่ช่องเดียวรวม — ไม่งั้นเปิดโน้ตอีกอันแล้วร่างของอันแรกหาย
@@ -2038,8 +2495,17 @@ function loadExtraDrafts() {
     return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
   } catch (err) { return {}; }
 }
+// ร่างเซฟถี่มาก (ทุกครั้งที่พิมพ์) — ถ้าพังต้องเตือน แต่เตือนครั้งเดียวพอ ไม่งั้นเด้งรัว
+let draftWarnShown = false;
+function warnDraftFailed() {
+  if (draftWarnShown) return;
+  draftWarnShown = true;
+  alert('⚠️ ระบบกันร่างหายทำงานไม่ได้ — พื้นที่เก็บข้อมูลเต็ม\n\n' +
+        'ตอนนี้ถ้าปิดแอปก่อนกดบันทึก ข้อความที่เขียนค้างจะหาย\n' +
+        'แนะนำ: คัดลอกข้อความเก็บไว้ที่อื่น แล้วไป ตั้งค่า → export ทั้งหมด');
+}
 function saveExtraDrafts(o) {
-  try { localStorage.setItem(K_EXTRA_DRAFT, JSON.stringify(o)); } catch (err) {}
+  try { localStorage.setItem(K_EXTRA_DRAFT, JSON.stringify(o)); } catch (err) { warnDraftFailed(); }
 }
 function draftKeyFor(id) { return id || '__new__'; }
 function saveExtraNoteDraft() {
@@ -2130,7 +2596,7 @@ function renderExtraNotes() {
 
   el.innerHTML = list.slice().reverse().map(function (n) {
     const dateStr = n.addedAt ? fmtShortY(localKey(new Date(n.addedAt))) : '';
-    const labelText = (n.private ? '🔒 ' : '') + (n.label ? esc(n.label) : '');
+    const labelText = (n.private ? '🔒 ' : '') + (n.themeTag ? '🪞 ' : '') + (n.label ? esc(n.label) : '');
     const header = (n.label || dateStr || n.private)
       ? '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">' +
           '<span style="font-size:12px;color:var(--accentL)">' + labelText + '</span>' +
@@ -2184,6 +2650,7 @@ function cancelExtraNoteEdit() {
   document.getElementById('extra-note-read').classList.add('hidden');
   document.body.style.overflow = '';
   extraNoteViewingId = null;
+  pendingThemeTag = null;                    // ปิดหน้าต่างแล้ว ป้ายหมวดที่ค้างต้องไม่ติดไปโน้ตอันถัดไป
 }
 // ── โหมดอ่าน ──
 function openExtraNoteRead(id) {
@@ -2233,6 +2700,15 @@ function openExtraNoteEdit(id) {
 }
 function addExtraNoteClicked() { openExtraNoteEdit(null); }
 function editExtraNote(id) { openExtraNoteEdit(id); }
+// เขียนสะท้อนจากหน้าทบทวนรายหมวด — ใช้ตัวเขียนบันทึกเสริมตัวเดิม แค่ติดป้ายหมวดไว้
+function startThemeReflection(tag) {
+  if (isReadOnly()) return;
+  pendingThemeTag = tag;
+  openExtraNoteEdit(null);
+  const labelEl = document.getElementById('extra-note-label');
+  if (labelEl && !labelEl.value.trim()) labelEl.value = 'สะท้อน: ' + tag;
+  document.getElementById('extra-note-text').focus();
+}
 function saveExtraNote() {
   if (isReadOnly()) return;
   const label = document.getElementById('extra-note-label').value.trim();
@@ -2242,13 +2718,17 @@ function saveExtraNote() {
   const list = loadExtraNotes();
   if (extraNoteEditingId) {
     const idx = list.findIndex(function (n) { return n.id === extraNoteEditingId; });
-    if (idx !== -1) { list[idx].label = label; list[idx].text = text; list[idx].private = isPrivate; }
+    if (idx !== -1) { list[idx].label = label; list[idx].text = text; list[idx].private = isPrivate; } // themeTag เดิมคงไว้ ไม่แตะ
   } else {
-    list.push({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, private: isPrivate, addedAt: new Date().toISOString() });
+    const rec = { id: 'n' + Date.now() + Math.random().toString(36).slice(2, 7), label: label, text: text, private: isPrivate, addedAt: new Date().toISOString() };
+    if (pendingThemeTag) rec.themeTag = pendingThemeTag;
+    list.push(rec);
   }
-  saveExtraNotesArr(list);
+  if (!saveExtraNotesArr(list)) return;   // เซฟไม่ผ่าน = ห้ามล้างร่าง ไม่งั้นข้อความหายเกลี้ยง
+  pendingThemeTag = null;  // ใช้ครั้งเดียวจบ กันติดไปกับโน้ตอันถัดไป
   cancelExtraNoteEdit();   // บันทึกสำเร็จแล้ว ร่างไม่จำเป็นอีก ล้างทิ้งได้
   renderExtraNotes();
+  if (activeThemeTag) renderHistory();   // อยู่หน้าหมวดอยู่ ให้เห็นของที่เพิ่งเขียนทันที
 }
 function deleteExtraNote(id) {
   if (isReadOnly()) return;
@@ -2271,7 +2751,8 @@ function buildExportPayload(shareable) {
     drafts: loadAllDrafts(),   // เก็บร่างทุกวันที่ยังไม่ได้บันทึก ไม่ใช่แค่วันเดียว
     // บันทึกเสริมที่ไม่ผูกกับวัน — ไปด้วยกันตอน export แต่คนละชุดข้อมูล
     // export แบบแชร์ได้ (shareable) จะตัดอันที่ติ๊ก 🔒 ส่วนตัวออก
-    extraNotes: shareable ? allExtra.filter(function (n) { return !n.private; }) : allExtra
+    extraNotes: shareable ? allExtra.filter(function (n) { return !n.private; }) : allExtra,
+    checkins: loadCheckins()   // เช้า/ก่อนนอน — คนละชุดกับ entries แต่ต้อง backup ไปด้วย
   };
 }
 function downloadJSON(payload, filename) {
@@ -2290,8 +2771,67 @@ function handleExport() {
   renderSettings();
 }
 function handleExportShareable() {
+  const found = itemsSinceLastShareableExport();
+  // โหมดอ่านอย่างเดียว: ห้ามแก้ข้อมูล เลยข้ามหน้ารีวิว (ที่เซฟค่า 🔒 กลับเข้าบันทึก) ไปเลย
+  if (isReadOnly()) { doExportShareable(); return; }
+  if (!found.newEntries.length && !found.newNotes.length) { doExportShareable(); return; }
+  openExportReviewModal(found);
+}
+function itemsSinceLastShareableExport() {
+  const since = prefs.lastShareableExport;
+  const newEntries = entries.filter(function (e) { return !since || e.date > since; });
+  const newNotes = loadExtraNotes().filter(function (n) {
+    if (!since) return true;
+    const k = n.addedAt ? localKey(new Date(n.addedAt)) : null;
+    return !!k && k > since;
+  });
+  return { newEntries: newEntries, newNotes: newNotes };
+}
+function openExportReviewModal(found) {
+  let html = '';
+  found.newEntries.forEach(function (e) {
+    html += '<div class="card" style="padding:10px 12px">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">' +
+      '<input type="checkbox" data-kind="entry" data-key="' + e.date + '" style="width:16px;height:16px;flex-shrink:0"' + (e.private ? ' checked' : '') + '>' +
+      '<span style="font-size:13.5px;flex:1">📅 ' + fmtShort(e.date) + '</span></label></div>';
+  });
+  found.newNotes.forEach(function (n) {
+    const dateStr = n.addedAt ? fmtShort(localKey(new Date(n.addedAt))) : '';
+    html += '<div class="card" style="padding:10px 12px">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">' +
+      '<input type="checkbox" data-kind="note" data-key="' + n.id + '" style="width:16px;height:16px;flex-shrink:0"' + (n.private ? ' checked' : '') + '>' +
+      '<span style="font-size:13.5px;flex:1">📝 ' + (n.label ? esc(n.label) : 'บันทึกเสริม') + (dateStr ? ' · ' + dateStr : '') + '</span></label></div>';
+  });
+  document.getElementById('export-review-list').innerHTML = html;
+  document.getElementById('export-review-modal').classList.remove('hidden');
+}
+function closeExportReviewModal() {
+  document.getElementById('export-review-modal').classList.add('hidden');
+}
+function confirmExportReview() {
+  const boxes = document.querySelectorAll('#export-review-list input[type="checkbox"]');
+  const noteChecked = {};
+  boxes.forEach(function (box) {
+    if (box.dataset.kind === 'entry') {
+      const e = entries.find(function (x) { return x.date === box.dataset.key; });
+      if (e) e.private = box.checked;
+    } else {
+      noteChecked[box.dataset.key] = box.checked;
+    }
+  });
+  saveEntries();
+  if (Object.keys(noteChecked).length) {
+    const arr = loadExtraNotes();
+    arr.forEach(function (n) { if (noteChecked.hasOwnProperty(n.id)) n.private = noteChecked[n.id]; });
+    saveExtraNotesArr(arr);
+  }
+  renderHistory(); renderExtraNotes();
+  closeExportReviewModal();
+  doExportShareable();
+}
+function doExportShareable() {
   downloadJSON(buildExportPayload(true), 'reflect-shareable-' + todayKey() + '.json');
-  // ไม่อัปเดต lastExport — นี่ไม่ใช่ backup ฉบับสมบูรณ์ ยังต้อง "export ทั้งหมด" เก็บไว้ต่างหากด้วย
+  prefs.lastShareableExport = todayKey(); savePrefs();
 }
 
 function handleImport(evt) {
@@ -2304,7 +2844,14 @@ function handleImport(evt) {
       const incoming = Array.isArray(data) ? data : (data.entries || []);
       if (!Array.isArray(incoming)) throw new Error('bad format');
 
+      // ไฟล์จากเวอร์ชันที่ใหม่กว่าอาจมีข้อมูลที่แอปนี้ยังไม่รู้จัก — เตือนก่อน ไม่ห้าม
+      if (data.version && data.version > EXPORT_VERSION) {
+        if (!window.confirm('ไฟล์นี้มาจาก Reflect เวอร์ชันใหม่กว่า (ไฟล์ v' + data.version + ' · แอปนี้ v' + EXPORT_VERSION + ')\n\n' +
+                            'นำเข้าได้ แต่ข้อมูลบางส่วนที่แอปนี้ยังไม่รู้จักอาจหายไป\nจะนำเข้าต่อไหม?')) return;
+      }
+
       let added = 0, updated = 0;
+      const overwritten = [];
       const byDate = {};
       entries.forEach(function (e) { byDate[e.date] = e; });
       incoming.forEach(function (ie) {
@@ -2314,17 +2861,18 @@ function handleImport(evt) {
           // เก็บอันที่มีเนื้อหามากกว่าไว้
           const oldLen = entryText(byDate[ie.date]).trim().length;
           const newLen = entryText(ie).trim().length;
-          if (newLen > oldLen) { byDate[ie.date] = ie; updated++; }
+          if (newLen > oldLen) { byDate[ie.date] = ie; updated++; overwritten.push(ie.date); }
         }
       });
       entries = Object.keys(byDate).sort().map(function (k) { return byDate[k]; });
       saveEntries();
 
-      // restore prefs (ถ้ามี) — ไม่ทับ seenWelcome ที่เป็น true อยู่แล้ว
+      // restore prefs (ถ้ามี) — รับเฉพาะคีย์ที่รู้จัก ไม่เหมาไปทั้งก้อน
+      // (ไฟล์เก่าอาจมี schema/ค่าที่ล้าสมัย ถ้าทับมาทั้งหมดจะทำให้สถานะแอปเพี้ยน)
       if (data.prefs && typeof data.prefs === 'object') {
-        const keep = prefs.seenWelcome;
-        prefs = Object.assign(prefs, data.prefs);
-        prefs.seenWelcome = keep || prefs.seenWelcome;
+        ['quickMode', 'lastExport', 'lastShareableExport'].forEach(function (k) {
+          if (data.prefs[k] !== undefined) prefs[k] = data.prefs[k];
+        });
         savePrefs();
         applyQuickMode();
       }
@@ -2360,7 +2908,26 @@ function handleImport(evt) {
         if (addedExtra) saveExtraNotesArr(localExtra);
       }
 
-      alert('นำเข้าสำเร็จ\nเพิ่มใหม่ ' + added + ' วัน' + (updated ? '\nอัปเดต ' + updated + ' วัน' : '') + '\nรวมทั้งหมด ' + entries.length + ' entries');
+      // รวม check-in เช้า/ก่อนนอน — คีย์คือ date+session อันไหนมีแล้วไม่ทับ
+      if (Array.isArray(data.checkins) && data.checkins.length) {
+        const localCi = loadCheckins();
+        const have = new Set(localCi.map(function (c) { return c.date + '|' + c.session; }));
+        let addedCi = 0;
+        data.checkins.forEach(function (c) {
+          if (c && c.date && c.session && !have.has(c.date + '|' + c.session)) {
+            localCi.push(c); have.add(c.date + '|' + c.session); addedCi++;
+          }
+        });
+        if (addedCi) {
+          localCi.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : (a.session < b.session ? -1 : 1)); });
+          saveCheckinsArr(localCi);
+        }
+      }
+
+      alert('นำเข้าสำเร็จ\nเพิ่มใหม่ ' + added + ' วัน' +
+            (updated ? '\nเขียนทับ ' + updated + ' วัน: ' + overwritten.map(fmtShort).join(', ') +
+                       '\n(เก็บอันที่เนื้อหายาวกว่าไว้)' : '') +
+            '\nรวมทั้งหมด ' + entries.length + ' entries');
       updateHeader(); renderAllSliders(); renderQuestions(); renderSettings();
     } catch (err) {
       alert('ไม่สามารถอ่านไฟล์ได้ — ตรวจว่าเป็นไฟล์ .json ที่ export จาก Reflect');
@@ -2389,7 +2956,7 @@ function loadAllDrafts() {
   } catch (err) { return {}; }
 }
 function saveAllDrafts(obj) {
-  try { localStorage.setItem(K_DRAFTS, JSON.stringify(obj)); } catch (err) {}
+  try { localStorage.setItem(K_DRAFTS, JSON.stringify(obj)); } catch (err) { warnDraftFailed(); }
 }
 // ย้ายร่างรูปแบบเก่า (ช่องเดียว) เข้าระบบใหม่ครั้งเดียวตอนเปิดแอป — กันร่างที่ค้างอยู่ของคนอื่นหายไปเฉยๆ
 function migrateOldDraft() {
@@ -2562,6 +3129,13 @@ pruneOldDrafts();
 pruneExtraDrafts();
 activeDate = todayKey();
 applyQuickMode();
+checkinSession = autoCheckinSession();   // เปิดมาให้ตรงกับเวลาจริง กดสลับเองได้
+(function () {
+  const row = document.getElementById('tabs-row');
+  if (row) row.addEventListener('scroll', updateTabsFade);
+  window.addEventListener('resize', updateTabsFade);
+  updateTabsFade();
+})();
 wireGrow(document.getElementById('notes-input'));
 wireGrow(document.getElementById('intention-input'));
 // หมายเหตุ: extra-note-text ไม่ใช้ autoGrow แล้ว — ในจอเต็มมันยืดเต็มพื้นที่ด้วย flex และเลื่อนในตัวเอง
@@ -2576,6 +3150,7 @@ updateHeader();
 registerSW();
 applyReadOnlyUI();
 if (isReadOnly()) switchTab('history');   // เครื่องอ่านอย่างเดียว ไม่ให้เจอแท็บเขียนตั้งแต่เปิดแอปเลย
+else switchTab('checkin');   // เช้า/ก่อนนอน คือประตูหน้าจริงของแอปตามที่ตั้งใจไว้ แรงเสียดทานต่ำสุด ควรเจอก่อนเสมอ
 
 // ถ้าเปิดแอปข้ามวัน ให้เด้งกลับมาเป็นวันปัจจุบันเอง
 setInterval(function () {
