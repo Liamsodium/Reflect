@@ -414,8 +414,9 @@
         <button class="mode-btn" id="ci-n" onclick="setCheckinSession('n')">🌙 ก่อนนอน</button>
       </div>
       <div class="mode-hint" id="ci-hint"></div>
+      <div id="ci-pending" class="hidden"></div>
       <div id="checkin-form"></div>
-      <div class="card mt-12">
+      <div class="card mt-12" id="ci-save-card">
         <button class="btn-primary" id="ci-save" onclick="saveCheckin()">บันทึก</button>
         <p class="settings-note" id="ci-status" style="margin-top:8px"></p>
       </div>
@@ -598,6 +599,7 @@
         <div class="settings-row mt-14">
           <button class="btn-small accent" onclick="handleExport()">↓ export ทั้งหมด</button>
           <button class="btn-small" onclick="handleExportShareable()">↓ export แบบแชร์ได้</button>
+          <button class="btn-small" onclick="exportCheckinsOnly()">↓ export เฉพาะเช้า/ก่อนนอน</button>
           <label class="btn-small" style="cursor:pointer">
             ↑ import
             <input type="file" accept=".json" style="display:none" onchange="handleImport(event)" />
@@ -759,7 +761,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.30';
+const APP_VERSION = '9.32';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -977,7 +979,7 @@ const QUICK_PROMPTS = [
 
 // ── State ──
 let entries = [];
-let prefs = { quickMode: false, seenWelcome: false, lastExport: null, lastShareableExport: null, schema: SCHEMA };
+let prefs = { quickMode: false, seenWelcome: false, lastExport: null, lastShareableExport: null, lastCheckinExportAt: null, schema: SCHEMA };
 let sliders = {};
 let tracker = { sleep: false, exercise: false, social: false };
 let answers = ['', '', ''];
@@ -2080,6 +2082,33 @@ function textCardHtml(key, label, placeholder) {
 }
 function renderCheckinForm() {
   const m = checkinSession === 'm';
+  // โหมดอ่านอย่างเดียว: ไม่โชว์ฟอร์มเลย เพราะเดิมยังกด/พิมพ์ได้แต่เซฟไม่ได้ ซึ่งทำให้เข้าใจผิด
+  if (isReadOnly()) {
+    const saved = findCheckin(todayKey(), checkinSession);
+    let ro = '<div class="card"><p class="settings-note" style="margin:0">' +
+      '👁 เครื่องนี้ตั้งเป็นโหมดอ่านอย่างเดียว — ดูได้อย่างเดียว เขียนเช้า/ก่อนนอนที่เครื่องหลัก' +
+      '</p></div>';
+    if (saved) {
+      const bits = [];
+      if (m) {
+        if (saved.sleep) bits.push('นอน: ' + CHECKIN_SCALES.sleep.labels[saved.sleep - 1]);
+        if (saved.areas && saved.areas.length) bits.push(saved.areas.join(' · '));
+        (saved.musts || []).forEach(function (t, ti) { if (t && t.trim()) bits.push((ti + 1) + '. ' + t); });
+        if (saved.plan) bits.push(saved.plan);
+      } else {
+        if (saved.energyUsed) bits.push('ใช้แรง: ' + CHECKIN_SCALES.energyUsed.labels[saved.energyUsed - 1]);
+        if (saved.productive) bits.push('ได้งาน: ' + CHECKIN_SCALES.productive.labels[saved.productive - 1]);
+        if (saved.stress) bits.push('เครียด: ' + CHECKIN_SCALES.stress.labels[saved.stress - 1]);
+        if (saved.feeling) bits.push(saved.feeling);
+        if (saved.summary) bits.push(saved.summary);
+      }
+      ro += '<div class="card"><span class="lbl">' + (m ? '🌅 เช้า' : '🌙 ก่อนนอน') + 'วันนี้</span>' +
+            bits.map(function (b) { return '<p class="entry-a" style="margin-top:6px">' + esc(b) + '</p>'; }).join('') +
+            '</div>';
+    }
+    document.getElementById('checkin-form').innerHTML = ro;
+    return;
+  }
   let h = '';
   if (m) {
     h += scaleHtml('sleep');
@@ -2144,10 +2173,47 @@ function renderCheckin() {
   if (!checkinDraft.musts) checkinDraft.musts = ['', '', ''];
   const st = document.getElementById('ci-status');
   if (st) st.textContent = existing ? '✓ บันทึกของวันนี้ไว้แล้ว — แก้แล้วกดบันทึกซ้ำได้' : '';
-  const sv = document.getElementById('ci-save');
-  if (sv) sv.classList.toggle('hidden', isReadOnly());
+  const svc = document.getElementById('ci-save-card');
+  if (svc) svc.classList.toggle('hidden', isReadOnly());   // ซ่อนทั้งการ์ด ไม่ใช่แค่ปุ่ม ไม่งั้นเหลือกล่องเปล่า
   renderCheckinForm();
+  renderCheckinPending();
   renderCheckinHistory();
+}
+// ── ส่งเฉพาะข้อมูลเช้า/ก่อนนอนไปเครื่องอื่น ──
+// ไฟล์นี้ "ไม่มี" บันทึกประจำวันติดไปเลย เลยไปทับของในเครื่องปลายทางไม่ได้แม้แต่วันเดียว
+// (ฝั่ง import ข้ามส่วนที่ไม่มีในไฟล์อยู่แล้ว จึงไม่ต้องแก้อะไรตรงนั้น)
+function pendingCheckins() {
+  const since = prefs.lastCheckinExportAt;
+  return loadCheckins().filter(function (c) { return !since || (c.savedAt && c.savedAt > since); });
+}
+function pendingCheckinDays() {
+  const days = {};
+  pendingCheckins().forEach(function (c) { days[c.date] = true; });
+  return Object.keys(days).length;
+}
+function exportCheckinsOnly() {
+  const all = loadCheckins();
+  if (!all.length) { alert('ยังไม่มีข้อมูลเช้า/ก่อนนอนให้ส่ง'); return; }
+  // ส่งทั้งหมดเสมอ ไม่ใช่แค่ของค้าง — ลืมกดกี่วันก็ไม่มีอะไรหาย กดครั้งเดียวได้ครบ
+  downloadJSON({
+    app: 'reflect',
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    checkins: all
+  }, 'reflect-checkin-' + todayKey() + '.json');
+  prefs.lastCheckinExportAt = new Date().toISOString(); savePrefs();
+  renderCheckinPending();
+}
+function renderCheckinPending() {
+  const el = document.getElementById('ci-pending');
+  if (!el) return;
+  const n = pendingCheckinDays();
+  if (isReadOnly() || !n) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.className = 'card';
+  el.style.cssText = 'border-color:rgba(234,179,8,0.35);background:rgba(234,179,8,0.08)';
+  el.innerHTML = '<p style="font-size:13px;color:#fde68a;line-height:1.6;margin:0 0 10px">' +
+    '📤 มีข้อมูลเช้า/ก่อนนอน <strong>' + n + ' วัน</strong> ที่ยังไม่ได้ส่งไปเครื่องอื่น</p>' +
+    '<button class="btn-small accent" onclick="exportCheckinsOnly()">ส่งไปเครื่องอื่น</button>';
 }
 function saveCheckin() {
   if (isReadOnly()) return;
@@ -2167,6 +2233,7 @@ function saveCheckin() {
   list.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : (a.session < b.session ? -1 : 1)); });
   if (!saveCheckinsArr(list)) return;
   document.getElementById('ci-status').textContent = '✓ บันทึกแล้ว';
+  renderCheckinPending();
   renderCheckinHistory();
 }
 function renderCheckinHistory() {
@@ -2957,19 +3024,26 @@ function handleImport(evt) {
         if (addedExtra) saveExtraNotesArr(localExtra);
       }
 
-      // รวม check-in เช้า/ก่อนนอน — คีย์คือ date+session อันไหนมีแล้วไม่ทับ
+      // รวม check-in เช้า/ก่อนนอน — คีย์คือ date+session
+      // ใช้กฎ "บันทึกทีหลังชนะ" (ดูจาก savedAt) ไม่ใช่ "มีแล้วข้าม"
+      // เพราะถ้าข้าม การแก้ไขของวันเดิมจากอีกเครื่องจะไม่มีวันไปถึงเลย
       if (Array.isArray(data.checkins) && data.checkins.length) {
         const localCi = loadCheckins();
-        const have = new Set(localCi.map(function (c) { return c.date + '|' + c.session; }));
-        let addedCi = 0;
+        const byKey = {};
+        localCi.forEach(function (c) { byKey[c.date + '|' + c.session] = c; });
+        let addedCi = 0, updatedCi = 0;
         data.checkins.forEach(function (c) {
-          if (c && c.date && c.session && !have.has(c.date + '|' + c.session)) {
-            localCi.push(c); have.add(c.date + '|' + c.session); addedCi++;
-          }
+          if (!c || !c.date || !c.session) return;
+          const k = c.date + '|' + c.session;
+          const cur = byKey[k];
+          if (!cur) { byKey[k] = c; addedCi++; return; }
+          // ไม่มี savedAt ถือว่าเก่ากว่า — ของเดิมในเครื่องชนะไว้ก่อน ปลอดภัยกว่า
+          if (c.savedAt && (!cur.savedAt || c.savedAt > cur.savedAt)) { byKey[k] = c; updatedCi++; }
         });
-        if (addedCi) {
-          localCi.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : (a.session < b.session ? -1 : 1)); });
-          saveCheckinsArr(localCi);
+        if (addedCi || updatedCi) {
+          const merged = Object.keys(byKey).map(function (k) { return byKey[k]; });
+          merged.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : (a.session < b.session ? -1 : 1)); });
+          saveCheckinsArr(merged);
         }
       }
 
