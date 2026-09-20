@@ -323,8 +323,8 @@
     <div class="w-item">
       <div class="w-icon">✍</div>
       <div>
-        <div class="w-h">เขียนวันละครั้ง</div>
-        <div class="w-p">ให้คะแนนวันนี้ ตอบคำถามที่เปลี่ยนทุกวัน วันไหนไม่มีแรงใช้ "โหมดรีบ" 15 วินาทีก็จบ</div>
+        <div class="w-h">เขียนได้หลายจังหวะในวันเดียว</div>
+        <div class="w-p">แท็บ <strong style="color:var(--accentL)">🌅 เช้า/ก่อนนอน</strong> ใช้เวลาไม่ถึงนาที แค่แตะเลือกก็จบ · แท็บ <strong style="color:var(--accentL)">✍ เขียน</strong> สำหรับตอบคำถามและให้คะแนนวัน วันไหนไม่มีแรงใช้ "โหมดรีบ" 15 วินาทีก็จบ</div>
       </div>
     </div>
 
@@ -705,12 +705,13 @@
       <div class="card">
         <span class="lbl">Tips</span>
         <ul class="tip-list">
-          <li><strong>วันที่ไม่มีแรง ใช้โหมดรีบ</strong><br>เขียนสั้นๆ ยังดีกว่าข้ามไปเลย — การไม่ขาดวันสำคัญกว่าความยาว</li>
+          <li><strong>วันที่ไม่มีแรง มีทางออกที่เบากว่า</strong><br>ใช้ "โหมดรีบ" เขียนสั้นๆ หรือเบากว่านั้นคือแท็บ 🌅 ก่อนนอน ที่แตะเลือกอย่างเดียว ไม่ต้องพิมพ์เลย — การไม่ขาดวันสำคัญกว่าความยาว</li>
           <li><strong>พูดแทนพิมพ์</strong><br>กดในช่องเขียนแล้วใช้ไมค์บนคีย์บอร์ด เร็วกว่าพิมพ์ 3–4 เท่า และมักได้ความรู้สึกจริงกว่า</li>
           <li><strong>เขียนเวลาเดิมทุกวัน</strong><br>ผูกไว้กับสิ่งที่ทำอยู่แล้ว เช่น หลังแปรงฟัน หรือก่อนวางมือถือนอน จะกลายเป็นนิสัยเร็วขึ้น</li>
           <li><strong>ลืมเขียนเมื่อวาน? ย้อนได้</strong><br>ในหน้าเขียน กดปุ่ม ‹ หรือเลือกวันที่ด้านบน เขียนย้อนหลังได้ทุกวัน — พลาดวันไม่ได้แปลว่าต้องเลิก</li>
           <li><strong>ไม่ต้องตอบให้ครบทุกคำถาม</strong><br>ข้อไหนไม่มีอะไรจะเขียน เว้นไว้ได้ ไม่ต้องฝืนหาเรื่องมาเขียน</li>
-          <li><strong>ใช้ช่องค้นหาในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียว เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
+          <li><strong>เช้าตั้งต้น ก่อนนอนปิดวัน</strong><br>แท็บ 🌅 เช้า/ก่อนนอน เปิดให้ตรงเวลาจริงอัตโนมัติ · ตอนเช้าเขียนสิ่งที่ต้องทำให้ได้วันนี้ ตอนก่อนนอนแตะสเกลทบทวนสั้นๆ ใช้แค่อันใดอันหนึ่งก็ได้ ไม่ต้องครบคู่</li>
+          <li><strong>ย้อนอ่านได้สองแบบในแท็บย้อนหลัง</strong><br>พิมพ์คำเดียวในช่องค้นหา เช่น "สอบ" หรือ "เหนื่อย" จะเห็นทุกครั้งที่เคยเขียนถึงมัน · หรือแตะปุ่มหมวด เช่น "ความสัมพันธ์" จะเห็นทุกคำตอบเรื่องนั้นเรียงกัน แล้วเขียนสะท้อนต่อท้ายได้ — ตรงนี้คือจุดที่การจดเริ่มให้ผลจริง</li>
           <li><strong>Export ทุกสัปดาห์</strong><br>เก็บไฟล์ไว้ใน iCloud หรือ Google Drive ข้อมูลอยู่ในเครื่องนี้ที่เดียว ถ้าหายคือหายเลย</li>
           <li><strong>อ่านย้อนหลังบ้าง ไม่ใช่แค่เขียน</strong><br>เปิดดู 1 เดือนก่อนแล้วเทียบกับวันนี้ จะเห็นสิ่งที่ตอนอยู่ในนั้นมองไม่เห็น</li>
         </ul>
@@ -758,7 +759,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.26';
+const APP_VERSION = '9.30';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -939,7 +940,9 @@ const EVENING_TAGS = [
 // สเกล 1-5 แบบมีคำกำกับ ไม่ใช่ตัวเลขลอย ๆ — เลือกครั้งเดียวจบ ไม่ต้องลากสไลเดอร์
 const CHECKIN_SCALES = {
   sleep:      { q: 'เมื่อคืนนอนเป็นยังไง?',        labels: ['แย่มาก','ไม่ค่อยดี','พอใช้','ดี','ดีมาก'] },
-  energy:     { q: 'ตอนนี้มีแรงแค่ไหน?',          labels: ['หมดแรง','เหนื่อย','พอไหว','มีแรง','เต็มพลัง'] },
+  energyUsed: { q: 'วันนี้ใช้แรงไปเยอะแค่ไหน?',    labels: ['แทบไม่ได้ใช้','นิดหน่อย','พอประมาณ','เยอะ','หมดเกลี้ยง'] },
+  // energy (เดิม: 'ตอนนี้มีแรงแค่ไหน') เลิกใช้แล้ว — เก็บไว้เพื่ออ่านบันทึกเก่าให้ความหมายไม่เพี้ยน
+  energy:     { q: 'ตอนนี้มีแรงแค่ไหน?',          labels: ['หมดแรง','เหนื่อย','พอไหว','มีแรง','เต็มพลัง'], retired: true },
   productive: { q: 'วันนี้ได้ทำอะไรเป็นชิ้นเป็นอันแค่ไหน?', labels: ['แทบไม่ได้ทำ','ได้นิดหน่อย','พอสมควร','ได้เยอะ','ได้เต็มที่'] },
   stress:     { q: 'วันนี้เครียดแค่ไหน?',          labels: ['สบายมาก','ค่อนข้างสบาย','กลาง ๆ','ค่อนข้างเครียด','เครียดมาก'] },
 };
@@ -2087,15 +2090,38 @@ function renderCheckinForm() {
       h += '<button class="chip' + (on ? ' chip-active' : '') + '" onclick="toggleArea(\'' + esc(a) + '\')">' + esc(a) + '</button>';
     });
     h += '</div></div>';
-    h += textCardHtml('plan', 'วันนี้ตั้งใจจะทำอะไร?', 'วันนี้ฉันจะ...');
+    h += '<div class="card"><p class="prompt-text">สามสิ่งที่ต้องทำให้ได้วันนี้</p>' +
+         '<p class="settings-note" style="margin:0 0 10px">ไม่ต้องครบสามก็ได้ — เขียนเฉพาะอันที่ "ต้อง" จริง ๆ</p>';
+    for (let mi = 0; mi < 3; mi++) {
+      h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">' +
+           '<span style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--accentL);padding-top:11px;flex-shrink:0">' + (mi + 1) + '.</span>' +
+           '<textarea id="ci-must-' + mi + '" class="short" style="flex:1" placeholder="' + (mi === 0 ? 'อันที่ขาดไม่ได้จริง ๆ...' : 'ไม่ใส่ก็ได้') + '">' +
+           esc((checkinDraft.musts || [])[mi] || '') + '</textarea></div>';
+    }
+    h += '</div>';
+    h += textCardHtml('plan', 'สิ่งที่อยากทำเพิ่มเติม (หรืออยากอธิบายอะไรเพิ่ม)',
+                      'ไม่บังคับ — เขียนเพิ่มได้ตามสบาย...');
   } else {
-    h += scaleHtml('energy');
+    h += scaleHtml('energyUsed');
     h += scaleHtml('productive');
     h += scaleHtml('stress');
     h += textCardHtml('feeling', 'วันนี้รู้สึกยังไง อธิบายเป็นคำสั้น ๆ', 'เช่น เหนื่อย สงบ สับสน');
     h += textCardHtml('summary', 'สรุปวันนี้สั้น ๆ', 'วันนี้เกิดอะไรขึ้นบ้าง...');
   }
   document.getElementById('checkin-form').innerHTML = h;
+  // ผูกช่อง "ต้องทำให้ได้" ทั้งสามกลับเข้า draft
+  for (let mi = 0; mi < 3; mi++) {
+    const mel = document.getElementById('ci-must-' + mi);
+    if (!mel) continue;
+    mel.addEventListener('input', (function (idx) {
+      return function (ev) {
+        if (!checkinDraft.musts) checkinDraft.musts = ['', '', ''];
+        checkinDraft.musts[idx] = ev.target.value;
+        autoGrow(ev.target);
+      };
+    })(mi));
+    autoGrow(mel);
+  }
   // ผูก textarea กลับเข้า draft
   ['plan','feeling','summary'].forEach(function (k) {
     const el = document.getElementById('ci-' + k);
@@ -2115,6 +2141,7 @@ function renderCheckin() {
   const existing = findCheckin(todayKey(), checkinSession);
   checkinDraft = existing ? Object.assign({}, existing) : {};
   if (!checkinDraft.areas) checkinDraft.areas = [];
+  if (!checkinDraft.musts) checkinDraft.musts = ['', '', ''];
   const st = document.getElementById('ci-status');
   if (st) st.textContent = existing ? '✓ บันทึกของวันนี้ไว้แล้ว — แก้แล้วกดบันทึกซ้ำได้' : '';
   const sv = document.getElementById('ci-save');
@@ -2127,10 +2154,12 @@ function saveCheckin() {
   const rec = Object.assign({}, checkinDraft, {
     date: todayKey(), session: checkinSession, savedAt: new Date().toISOString()
   });
-  const keys = checkinSession === 'm' ? ['sleep','areas','plan'] : ['energy','productive','stress','feeling','summary'];
+  const keys = checkinSession === 'm' ? ['sleep','areas','musts','plan'] : ['energyUsed','productive','stress','feeling','summary'];
   const filled = keys.some(function (k) {
     const v = rec[k];
-    return Array.isArray(v) ? v.length : (v != null && String(v).trim() !== '');
+    // array ต้องมีของที่ "มีเนื้อหาจริง" ไม่ใช่แค่มีช่องว่าง ๆ (musts เริ่มต้นเป็น ['','',''] ซึ่ง length = 3)
+    if (Array.isArray(v)) return v.some(function (x) { return x != null && String(x).trim() !== ''; });
+    return v != null && String(v).trim() !== '';
   });
   if (!filled) { alert('ยังไม่ได้กรอกอะไรเลย'); return; }
   const list = loadCheckins().filter(function (c) { return !(c.date === rec.date && c.session === rec.session); });
@@ -2152,9 +2181,11 @@ function renderCheckinHistory() {
     if (m) {
       if (c.sleep) bits.push('นอน: ' + CHECKIN_SCALES.sleep.labels[c.sleep - 1]);
       if (c.areas && c.areas.length) bits.push(c.areas.join(' · '));
-      if (c.plan) bits.push(c.plan);
+      (c.musts || []).forEach(function (t, ti) { if (t && t.trim()) bits.push((ti + 1) + '. ' + t); });
+      if (c.plan) bits.push(c.plan);   // ช่องเขียนเพิ่ม (บันทึกเก่าก่อนมีสามช่องก็เก็บไว้ช่องนี้)
     } else {
-      if (c.energy) bits.push('แรง: ' + CHECKIN_SCALES.energy.labels[c.energy - 1]);
+      if (c.energyUsed) bits.push('ใช้แรง: ' + CHECKIN_SCALES.energyUsed.labels[c.energyUsed - 1]);
+      if (c.energy) bits.push('แรงคงเหลือ: ' + CHECKIN_SCALES.energy.labels[c.energy - 1]);   // บันทึกเก่า
       if (c.productive) bits.push('ได้งาน: ' + CHECKIN_SCALES.productive.labels[c.productive - 1]);
       if (c.stress) bits.push('เครียด: ' + CHECKIN_SCALES.stress.labels[c.stress - 1]);
       if (c.feeling) bits.push(c.feeling);
@@ -2194,6 +2225,9 @@ function tagOfPrompt(p) {
   const table = TAGS_BY_SRC[p.src || 'main'];
   return table ? (table[p.index] || null) : null;
 }
+// intention เป็นข้อมูลระดับ "วัน" ไม่ใช่ของคำถามข้อใดข้อหนึ่ง
+// เดิมแปะติดไปกับทุกคำตอบ เลยโผล่ซ้ำในทุกหมวดที่วันนั้นตอบไว้ — ย้ายมาอยู่หมวดเดียวที่ตรงความหมายจริง
+const INTENTION_TAG = 'เป้าหมายและทิศทาง';
 function getTaggedAnswers(tag) {
   const rows = [];
   entries.forEach(function (e) {
@@ -2203,9 +2237,14 @@ function getTaggedAnswers(tag) {
         if (tagOfPrompt(p) !== tag) return;
         const a = (pair[1] && pair[1][i]) ? pair[1][i] : '';
         if (!a.trim()) return;
-        rows.push({ date: e.date, q: p.text, a: a, intention: e.intention, intentionKept: e.intentionKept, private: e.private });
+        rows.push({ date: e.date, q: p.text, a: a, private: e.private });
       });
     });
+    // แถว intention ของวันนั้น — วันละแถวเดียว และเฉพาะหมวดเป้าหมายเท่านั้น
+    if (tag === INTENTION_TAG && e.intention && e.intention.trim()) {
+      rows.push({ date: e.date, isIntention: true, intention: e.intention,
+                  intentionKept: e.intentionKept, private: e.private });
+    }
   });
   rows.sort(function (x, y) { return x.date < y.date ? 1 : -1; }); // ใหม่สุดก่อน
   return rows;
@@ -2220,10 +2259,13 @@ function renderThemeList(tag) {
   });
   rows.sort(function (x, y) { return x.date < y.date ? 1 : -1; });
 
-  const answerCount = rows.filter(function (r) { return !r.reflection; }).length;
-  const reflCount = rows.length - answerCount;
+  const answerCount = rows.filter(function (r) { return !r.reflection && !r.isIntention; }).length;
+  const reflCount = rows.filter(function (r) { return r.reflection; }).length;
+  const intentionCount = rows.filter(function (r) { return r.isIntention; }).length;
   document.getElementById('history-count').textContent =
-    answerCount + ' คำตอบในหมวด "' + tag + '"' + (reflCount ? ' · ' + reflCount + ' บันทึกสะท้อน' : '');
+    answerCount + ' คำตอบในหมวด "' + tag + '"' +
+    (intentionCount ? ' · ' + intentionCount + ' intention' : '') +
+    (reflCount ? ' · ' + reflCount + ' บันทึกสะท้อน' : '');
 
   const el = document.getElementById('history-list');
   let html = '';
@@ -2245,11 +2287,18 @@ function renderThemeList(tag) {
     const kb = { yes: ' <span style="color:var(--green)">✓ ทำได้</span>',
                  partial: ' <span style="color:var(--yellow)">~ ทำได้บางส่วน</span>',
                  no: ' <span style="color:var(--red)">✕ ไม่ได้ทำ</span>' }[r.intentionKept] || '';
+    if (r.isIntention) {
+      html += '<div class="card" style="margin-bottom:10px">' +
+        '<div class="entry-date">' + fmtShort(r.date) + (r.private ? ' 🔒' : '') + '</div>' +
+        '<p class="entry-section-label" style="margin-top:6px">INTENTION' + kb + '</p>' +
+        '<p class="entry-a" style="color:var(--accentL)">' + esc(r.intention) + '</p>' +
+        '</div>';
+      return;
+    }
     html += '<div class="card" style="margin-bottom:10px">' +
       '<div class="entry-date">' + fmtShort(r.date) + (r.private ? ' 🔒' : '') + '</div>' +
       '<p class="entry-q">' + esc(r.q) + '</p>' +
       '<p class="entry-a">' + esc(r.a) + '</p>' +
-      (r.intention ? '<div class="entry-section"><p class="entry-section-label">INTENTION' + kb + '</p><p class="entry-a" style="color:var(--accentL)">' + esc(r.intention) + '</p></div>' : '') +
       '</div>';
   });
   // ท้ายหน้า: ชวนเขียนสะท้อนหลังอ่านทั้งหมด
@@ -3152,10 +3201,18 @@ applyReadOnlyUI();
 if (isReadOnly()) switchTab('history');   // เครื่องอ่านอย่างเดียว ไม่ให้เจอแท็บเขียนตั้งแต่เปิดแอปเลย
 else switchTab('checkin');   // เช้า/ก่อนนอน คือประตูหน้าจริงของแอปตามที่ตั้งใจไว้ แรงเสียดทานต่ำสุด ควรเจอก่อนเสมอ
 
-// ถ้าเปิดแอปข้ามวัน ให้เด้งกลับมาเป็นวันปัจจุบันเอง
-setInterval(function () {
-  if (activeDate && daysBetween(activeDate, todayKey()) < 0) setActiveDate(todayKey());
-}, 60000);
+// ถ้าเปิดแอปทิ้งไว้ข้ามเที่ยงคืน (พบมากเพราะเป็น PWA ที่ iOS ไม่รีโหลดหน้าจอเวลาสลับแอป)
+// ให้เด้งกลับมาเป็นวันนี้เอง — แต่ "เฉพาะตอนที่ค้างอยู่ที่วันนี้ตอนข้ามคืน" เท่านั้น
+// ถ้ากำลังตั้งใจแก้ไขวันเก่า (กด "เมื่อวาน"/"ย้อนหลัง") ต้องไม่ไปรบกวน ไม่งั้นจะโดนเด้งออกมากลางที่กำลังแก้อยู่
+let lastKnownToday = todayKey();
+function catchUpToToday() {
+  const now = todayKey();
+  if (now === lastKnownToday) return;              // วันจริงยังไม่เปลี่ยน ไม่มีอะไรต้องทำ
+  if (activeDate === lastKnownToday) setActiveDate(now);  // ค้างอยู่ที่ "วันนี้" (เดิม) ตอนข้ามคืน -> เด้งตามไปวันนี้จริง
+  lastKnownToday = now;                             // ถ้ากำลังแก้วันเก่าอยู่ ปล่อยไว้เฉยๆ ไม่บังคับสลับ
+}
+setInterval(catchUpToToday, 60000);
+document.addEventListener('visibilitychange', function () { if (!document.hidden) catchUpToToday(); });
 
 document.getElementById('loading').classList.add('hidden');
 document.getElementById('app').classList.remove('hidden');
