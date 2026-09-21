@@ -59,6 +59,12 @@
 
     /* Body */
     #body { padding: 20px; max-width: 640px; margin: 0 auto; padding-bottom: calc(50px + env(safe-area-inset-bottom)); }
+    /* จอกว้าง (iPad ขึ้นไป) — ขยายเนื้อหาหลักให้ใหญ่ขึ้นแทนที่จะปล่อยว่างสองข้าง
+       ไม่แตะ <body> ตรงๆ เพราะ modal (fixed) เป็นพี่น้องกับ #body อยู่นอกก้อนนี้ ไม่โดนผลกระทบ
+       700px กันไว้ให้ต่ำกว่า iPad Mini แนวตั้ง (744px) แน่นอน แต่สูงกว่า iPhone ทุกรุ่นแนวตั้ง (~430px) แน่นอน */
+    @media (min-width: 700px) {
+      #body { zoom: 1.12; }
+    }
 
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; overflow-wrap: anywhere; }
     .lbl { display: block; font-size: 11px; color: var(--label); letter-spacing: 0.13em; font-family: 'DM Mono', monospace; margin-bottom: 12px; text-transform: uppercase; }
@@ -565,6 +571,15 @@
         <span class="lbl">Tracker สัปดาห์นี้</span>
         <div id="tracker-week"></div>
       </div>
+      <div class="card" id="checkin-chart-card">
+        <span class="lbl">เช้า/ก่อนนอน — 14 วันล่าสุด</span>
+        <div id="checkin-charts"></div>
+      </div>
+      <div class="card" id="checkin-link-card">
+        <span class="lbl">สิ่งที่เกี่ยวกันจากข้อมูลเช้า/ก่อนนอน</span>
+        <div id="checkin-links"></div>
+        <p class="settings-note" id="checkin-links-note"></p>
+      </div>
       <div class="card" id="monthly-avg-card">
         <span class="lbl">Overall เฉลี่ยรายเดือน</span>
         <div id="monthly-avg"></div>
@@ -761,7 +776,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.32';
+const APP_VERSION = '9.34';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -1871,8 +1886,137 @@ function renderDowInsights() {
 }
 
 // ── Chart ──
+// ===== กราฟเช้า/ก่อนนอน =====
+// สเกลไหนอยู่ช่วงไหน และ "ค่าสูง" แปลว่าดีหรือแย่หรือเฉย ๆ
+// good  = สูงแล้วดี (เขียว/เหลือง/แดงตามปกติ)
+// bad   = สูงแล้วแย่ (กลับสีให้ ไม่งั้นเครียดมากจะขึ้นเขียว)
+// plain = ไม่ตัดสิน (ใช้แรงเยอะไม่ได้แปลว่าดีหรือแย่ ขึ้นกับว่าใช้ไปกับอะไร)
+const CHECKIN_METRICS = [
+  { key: 'sleep',      session: 'm', dir: 'good'  },
+  { key: 'energyUsed', session: 'n', dir: 'plain' },
+  { key: 'productive', session: 'n', dir: 'good'  },
+  { key: 'stress',     session: 'n', dir: 'bad'   },
+];
+function checkinByDate() {
+  const map = {};
+  loadCheckins().forEach(function (c) {
+    if (!c || !c.date || !c.session) return;
+    if (!map[c.date]) map[c.date] = {};
+    map[c.date][c.session] = c;
+  });
+  return map;
+}
+// คืนค่าของ metric นั้นในแต่ละวันย้อนหลัง n วัน (null = วันนั้นไม่ได้กรอก)
+function checkinSeries(metric, n) {
+  const map = checkinByDate();
+  const out = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now); d.setDate(now.getDate() - i);
+    const k = localKey(d);
+    const rec = map[k] && map[k][metric.session];
+    const v = rec ? rec[metric.key] : null;
+    out.push({ date: k, val: (typeof v === 'number' && v >= 1 && v <= 5) ? v : null });
+  }
+  return out;
+}
+function metricColor(dir, v) {
+  if (dir === 'plain') return 'var(--accent)';
+  return scoreColor(dir === 'bad' ? (6 - v) : v, 5);
+}
+function renderCheckinCharts() {
+  const host = document.getElementById('checkin-charts');
+  if (!host) return;
+  let html = '';
+  let anyData = false;
+  CHECKIN_METRICS.forEach(function (m) {
+    const sc = CHECKIN_SCALES[m.key];
+    if (!sc) return;
+    const series = checkinSeries(m, 14);
+    const filled = series.filter(function (p) { return p.val != null; });
+    if (!filled.length) return;
+    anyData = true;
+    const avg = filled.reduce(function (s, p) { return s + p.val; }, 0) / filled.length;
+    html += '<div style="margin-bottom:16px">' +
+      '<p style="font-size:12.5px;color:var(--text);margin:0 0 2px">' + esc(sc.q) + '</p>' +
+      '<p class="chart-sub" style="margin:0 0 6px">เฉลี่ย ' + avg.toFixed(1) + '/5 · ' +
+        esc(sc.labels[Math.max(0, Math.min(4, Math.round(avg) - 1))]) + ' · จาก ' + filled.length + ' วัน</p>' +
+      '<div class="bar-chart">';
+    series.forEach(function (p) {
+      if (p.val == null) {
+        html += '<div class="bar-wrap"><div class="bar-fill" style="height:3px;background:var(--border)"></div>' +
+                '<span class="bar-label">' + Number(p.date.slice(8, 10)) + '</span></div>';
+        return;
+      }
+      html += '<div class="bar-wrap"><div class="bar-fill" style="height:' + Math.round((p.val / 5) * 52) + 'px;background:' +
+              metricColor(m.dir, p.val) + '" title="' + esc(sc.labels[p.val - 1]) + '"></div>' +
+              '<span class="bar-label">' + Number(p.date.slice(8, 10)) + '</span></div>';
+    });
+    html += '</div></div>';
+  });
+  host.innerHTML = anyData ? html : '<p class="empty">ยังไม่มีข้อมูลเช้า/ก่อนนอน</p>';
+}
+// จับคู่ "เช้าวันนั้น" กับ "ก่อนนอนวันเดียวกัน" แล้วเทียบว่ากลุ่มสูง/ต่ำต่างกันจริงไหม
+// ต้องมีข้อมูลพอสมควรถึงจะพูด — น้อยกว่านี้คือเดา ไม่ใช่ pattern
+const LINK_MIN_PAIRS = 8;   // วันที่มีครบทั้งคู่ อย่างน้อยเท่านี้
+const LINK_MIN_GROUP = 3;   // แต่ละกลุ่ม (สูง/ต่ำ) ต้องมีอย่างน้อยเท่านี้
+const LINK_MIN_GAP = 0.8;   // ต่างกันอย่างน้อยเท่านี้ถึงจะถือว่าน่าสนใจ
+function checkinLink(fromKey, fromSession, toKey, toSession) {
+  const map = checkinByDate();
+  const pairs = [];
+  Object.keys(map).forEach(function (d) {
+    const a = map[d][fromSession], b = map[d][toSession];
+    if (!a || !b) return;
+    const av = a[fromKey], bv = b[toKey];
+    if (typeof av !== 'number' || typeof bv !== 'number') return;
+    pairs.push({ from: av, to: bv });
+  });
+  if (pairs.length < LINK_MIN_PAIRS) return null;
+  const hi = pairs.filter(function (p) { return p.from >= 4; });
+  const lo = pairs.filter(function (p) { return p.from <= 2; });
+  if (hi.length < LINK_MIN_GROUP || lo.length < LINK_MIN_GROUP) return null;
+  const avg = function (arr) { return arr.reduce(function (s, p) { return s + p.to; }, 0) / arr.length; };
+  const hiAvg = avg(hi), loAvg = avg(lo);
+  if (Math.abs(hiAvg - loAvg) < LINK_MIN_GAP) return null;
+  return { hiAvg: hiAvg, loAvg: loAvg, hiN: hi.length, loN: lo.length, pairs: pairs.length };
+}
+function renderCheckinLinks() {
+  const host = document.getElementById('checkin-links');
+  const note = document.getElementById('checkin-links-note');
+  if (!host) return;
+  const checks = [
+    { from: 'sleep', fromSession: 'm', to: 'stress',     toSession: 'n', hiWord: 'นอนดี', loWord: 'นอนไม่ดี', label: 'ความเครียด' },
+    { from: 'sleep', fromSession: 'm', to: 'productive', toSession: 'n', hiWord: 'นอนดี', loWord: 'นอนไม่ดี', label: 'การได้งาน' },
+    { from: 'sleep', fromSession: 'm', to: 'energyUsed', toSession: 'n', hiWord: 'นอนดี', loWord: 'นอนไม่ดี', label: 'การใช้แรง' },
+  ];
+  let html = '';
+  let pairsSeen = 0;
+  checks.forEach(function (c) {
+    const r = checkinLink(c.from, c.fromSession, c.to, c.toSession);
+    if (!r) return;
+    pairsSeen = Math.max(pairsSeen, r.pairs);
+    const up = r.hiAvg > r.loAvg;
+    html += '<p style="font-size:13.5px;line-height:1.7;margin:0 0 10px">' +
+      'วันที่<strong style="color:var(--accentL)">' + c.hiWord + '</strong> ' + esc(c.label) +
+      ' เฉลี่ย <strong>' + r.hiAvg.toFixed(1) + '</strong> · วันที่' + c.loWord + ' เฉลี่ย <strong>' + r.loAvg.toFixed(1) + '</strong>' +
+      ' <span style="color:var(--dim)">(' + (up ? 'สูงกว่า' : 'ต่ำกว่า') + ' ' + Math.abs(r.hiAvg - r.loAvg).toFixed(1) + ')</span>' +
+      '</p>';
+  });
+  if (html) {
+    host.innerHTML = html;
+    note.textContent = 'เทียบจากวันที่กรอกครบทั้งเช้าและก่อนนอน ' + pairsSeen + ' วัน — เป็นแค่สิ่งที่นับได้ ไม่ใช่เหตุและผล';
+  } else {
+    const map = checkinByDate();
+    const paired = Object.keys(map).filter(function (d) { return map[d].m && map[d].n; }).length;
+    host.innerHTML = '<p class="empty">ยังบอกอะไรไม่ได้</p>';
+    note.textContent = 'ตอนนี้มีวันที่กรอกครบทั้งเช้าและก่อนนอน ' + paired + ' วัน — ต้องมีอย่างน้อย ' +
+      LINK_MIN_PAIRS + ' วัน และมีทั้งวันที่นอนดีและนอนไม่ดีอย่างน้อยฝั่งละ ' + LINK_MIN_GROUP + ' วัน ถึงจะเทียบได้อย่างมีความหมาย';
+  }
+}
 function renderChart() {
   renderInsights();
+  renderCheckinCharts();
+  renderCheckinLinks();
 
   // Calendar 30 days
   const set = new Set(entries.map(e => e.date));
