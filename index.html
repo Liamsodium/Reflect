@@ -776,7 +776,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.34';
+const APP_VERSION = '9.35';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -2492,6 +2492,7 @@ function renderThemeList(tag) {
         '<div class="mt-12 entry-actions">' +
         '<button class="btn-small" onclick="openExtraNoteRead(\'' + r.id + '\')">↗ เปิดอ่าน</button>' +
         (isReadOnly() ? '' : '<button class="btn-small accent" onclick="editExtraNote(\'' + r.id + '\')">✎ แก้ไข</button>') +
+        (isReadOnly() ? '' : '<button class="btn-small" onclick="deleteExtraNote(\'' + r.id + '\')">🗑 ลบ</button>') +
         '</div></div>';
       return;
     }
@@ -2985,10 +2986,16 @@ function saveExtraNote() {
     list.push(rec);
   }
   if (!saveExtraNotesArr(list)) return;   // เซฟไม่ผ่าน = ห้ามล้างร่าง ไม่งั้นข้อความหายเกลี้ยง
-  pendingThemeTag = null;  // ใช้ครั้งเดียวจบ กันติดไปกับโน้ตอันถัดไป
-  cancelExtraNoteEdit();   // บันทึกสำเร็จแล้ว ร่างไม่จำเป็นอีก ล้างทิ้งได้
-  renderExtraNotes();
-  if (activeThemeTag) renderHistory();   // อยู่หน้าหมวดอยู่ ให้เห็นของที่เพิ่งเขียนทันที
+  // โชว์ "✓ บันทึกแล้ว" ค้างไว้สักครู่ก่อนปิดกล่อง กันรู้สึกว่ากดแล้วหายวับไป ไม่รู้ว่าเซฟสำเร็จจริงไหม
+  const saveBtn = document.getElementById('extra-note-save-btn');
+  if (saveBtn) { saveBtn.textContent = '✓ บันทึกแล้ว'; saveBtn.disabled = true; }
+  setTimeout(function () {
+    pendingThemeTag = null;  // ใช้ครั้งเดียวจบ กันติดไปกับโน้ตอันถัดไป
+    cancelExtraNoteEdit();   // บันทึกสำเร็จแล้ว ร่างไม่จำเป็นอีก ล้างทิ้งได้
+    if (saveBtn) { saveBtn.textContent = 'บันทึก'; saveBtn.disabled = false; }
+    renderExtraNotes();
+    if (activeThemeTag) renderHistory();   // อยู่หน้าหมวดอยู่ ให้เห็นของที่เพิ่งเขียนทันที
+  }, 900);
 }
 function deleteExtraNote(id) {
   if (isReadOnly()) return;
@@ -2997,6 +3004,7 @@ function deleteExtraNote(id) {
   const drafts = loadExtraDrafts();
   if (drafts[id]) { delete drafts[id]; saveExtraDrafts(drafts); }   // ลบโน้ตแล้ว ร่างของมันต้องไม่ค้าง
   renderExtraNotes();
+  if (activeThemeTag) renderHistory();   // ลบจากหน้าทบทวนรายหมวด การ์ดต้องหายจากจอทันที ไม่ใช่ค้างจนกว่าจะสลับแท็บ
 }
 
 function buildExportPayload(shareable) {
