@@ -668,12 +668,12 @@
 
       <div class="card" id="counter-card">
         <span class="lbl">ตัวนับผู้ใช้แบบนิรนาม</span>
-        <p class="settings-text">ทุกครั้งที่เปิดแอป จะมีสัญญาณเล็กๆ ไปที่ GoatCounter เพื่อให้ผู้ทำแอปรู้คร่าวๆ ว่ามีกี่เครื่องใช้อยู่ ไม่มีเนื้อหาไดอารี่ในนั้น ไม่ใช้คุกกี้ และไม่เก็บที่อยู่ IP</p>
+        <p class="settings-text">เมื่อเปิดแอป (วันละไม่เกินหนึ่งครั้งต่อเครื่อง) จะมีสัญญาณเล็กๆ ไปที่ GoatCounter เพื่อให้ผู้ทำแอปรู้คร่าวๆ ว่ามีกี่เครื่องใช้อยู่ ไม่มีเนื้อหาไดอารี่ในนั้น ไม่ใช้คุกกี้ และไม่เก็บที่อยู่ IP</p>
         <label class="settings-row" style="align-items:center;margin-top:10px;cursor:pointer">
           <input type="checkbox" id="nocount-toggle" style="width:16px;height:16px;flex-shrink:0" onchange="toggleNoCount(this.checked)" />
           <span style="font-size:13px;color:var(--dim)">🚫 ไม่นับเครื่องนี้</span>
         </label>
-        <p class="settings-note" style="margin-top:8px">ตั้งค่านี้อยู่แค่ในเครื่องนี้เครื่องเดียว ไม่ติดไปกับไฟล์ export · ฟอนต์ของแอปโหลดจาก Google Fonts ซึ่งทำให้ Google เห็นที่อยู่เครือข่ายของเครื่อง ปิดตัวนับไม่ได้ช่วยเรื่องนี้</p>
+        <p class="settings-note" style="margin-top:8px">ตั้งค่านี้อยู่แค่ในเครื่องนี้เครื่องเดียว ไม่ติดไปกับไฟล์ export เครื่องจำแค่วันที่ส่งล่าสุดเพื่อไม่ให้ส่งซ้ำ · ฟอนต์ของแอปโหลดจาก Google Fonts ซึ่งทำให้ Google เห็นที่อยู่เครือข่ายของเครื่อง ปิดตัวนับไม่ได้ช่วยเรื่องนี้</p>
       </div>
 
       <div class="card">
@@ -804,7 +804,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.36';
+const APP_VERSION = '9.37';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -2769,12 +2769,20 @@ function initCounterUI() {
   const t = document.getElementById('nocount-toggle');
   if (t) t.checked = isNoCount();
 }
+// ส่งวันละไม่เกิน 1 ครั้งต่อเครื่อง — GoatCounter แบบ pixel ไม่รวมการเปิดซ้ำให้ เราเลยจำเองว่าวันนี้ส่งแล้ว
+// จำแค่ "วันที่ส่งล่าสุด" (ไม่ใช่ตัวระบุตัวตน) และจดก็ต่อเมื่อส่งสำเร็จจริง ถ้าออฟไลน์จะลองใหม่ตอนเปิดครั้งถัดไป
+const K_LASTPING = 'reflect_lastping_v1';
 function sendCounterPing() {
   if (isNoCount()) return;
   if (navigator.doNotTrack === '1') return;   // เคารพ Do Not Track
+  const today = todayKey();
+  try { if (localStorage.getItem(K_LASTPING) === today) return; } catch (err) {}
   try {
     const img = new Image();
     img.referrerPolicy = 'no-referrer';       // ไม่บอกว่ามาจากหน้าไหน
+    img.onload = function () {
+      try { localStorage.setItem(K_LASTPING, today); } catch (err) {}
+    };
     img.src = 'https://reflect-app.goatcounter.com/count?p=/app';
   } catch (err) {}
 }
