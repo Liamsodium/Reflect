@@ -350,8 +350,16 @@
     <div class="w-item">
       <div class="w-icon">🔒</div>
       <div>
-        <div class="w-h">ข้อมูลอยู่ในเครื่องคุณเท่านั้น</div>
-        <div class="w-p">ไม่มีบัญชี ไม่มีการส่งข้อมูลออกไปที่ไหน ไม่มีใครอ่านได้นอกจากคุณ — แต่ก็แปลว่าถ้าล้างประวัติเบราว์เซอร์ ข้อมูลจะหาย <strong style="color:var(--accentL)">Export เก็บไว้เป็นระยะ</strong></div>
+        <div class="w-h">ไดอารี่อยู่ในเครื่องคุณเท่านั้น</div>
+        <div class="w-p">ไม่มีบัญชี ไดอารี่ไม่ถูกส่งไปไหน เว้นแต่คุณเลือกส่งเอง ไม่มีใครอ่านได้นอกจากคุณ — แต่ก็แปลว่าถ้าล้างประวัติเบราว์เซอร์ ข้อมูลจะหาย <strong style="color:var(--accentL)">Export เก็บไว้เป็นระยะ</strong></div>
+      </div>
+    </div>
+
+    <div class="w-item">
+      <div class="w-icon">📊</div>
+      <div>
+        <div class="w-h">มีตัวนับแบบนิรนาม</div>
+        <div class="w-p">แอปนับคร่าวๆ ว่ามีกี่เครื่องเปิดใช้ ไม่เห็นเนื้อหาที่คุณเขียน ไม่ใช้คุกกี้ ปิดได้ใน ตั้งค่า · ฟอนต์โหลดมาจาก Google จึงทำให้ Google เห็นที่อยู่เครือข่ายของเครื่องคุณ</div>
       </div>
     </div>
 
@@ -658,6 +666,16 @@
         <p class="settings-note" style="margin-top:8px">ตั้งค่านี้อยู่แค่ในเครื่องนี้เครื่องเดียว ไม่ติดไปกับไฟล์ export/import — สลับกลับมาแก้ไขได้ตลอดโดยแค่ติ๊กออก ยัง import ข้อมูลใหม่ได้ตามปกติแม้เปิดโหมดนี้อยู่</p>
       </div>
 
+      <div class="card" id="counter-card">
+        <span class="lbl">ตัวนับผู้ใช้แบบนิรนาม</span>
+        <p class="settings-text">ทุกครั้งที่เปิดแอป จะมีสัญญาณเล็กๆ ไปที่ GoatCounter เพื่อให้ผู้ทำแอปรู้คร่าวๆ ว่ามีกี่เครื่องใช้อยู่ ไม่มีเนื้อหาไดอารี่ในนั้น ไม่ใช้คุกกี้ และไม่เก็บที่อยู่ IP</p>
+        <label class="settings-row" style="align-items:center;margin-top:10px;cursor:pointer">
+          <input type="checkbox" id="nocount-toggle" style="width:16px;height:16px;flex-shrink:0" onchange="toggleNoCount(this.checked)" />
+          <span style="font-size:13px;color:var(--dim)">🚫 ไม่นับเครื่องนี้</span>
+        </label>
+        <p class="settings-note" style="margin-top:8px">ตั้งค่านี้อยู่แค่ในเครื่องนี้เครื่องเดียว ไม่ติดไปกับไฟล์ export · ฟอนต์ของแอปโหลดจาก Google Fonts ซึ่งทำให้ Google เห็นที่อยู่เครือข่ายของเครื่อง ปิดตัวนับไม่ได้ช่วยเรื่องนี้</p>
+      </div>
+
       <div class="card">
         <span class="lbl">สถิติ</span>
         <div class="stat-boxes" id="stats-boxes"></div>
@@ -786,7 +804,7 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.35';
+const APP_VERSION = '9.36';
 const BUILD_DATE  = '20 ก.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
@@ -2738,6 +2756,28 @@ function toggleReadOnlyMode(checked) {
   renderExtraNotes();   // ปุ่มแก้ไข/ลบในการ์ดต้อง render ใหม่ให้ตรงโหมด
   renderHistory();
 }
+// ── ตัวนับผู้ใช้แบบนิรนาม (GoatCounter, แบบ pixel) ──
+// ส่งแค่ path "/app" ไม่มีเนื้อหาไดอารี่ — แยกคีย์ออกจาก K_PREFS และไม่ติดไปกับ export (ตั้งต่อเครื่อง เหมือนโหมดอ่านอย่างเดียว)
+const K_NOCOUNT = 'reflect_nocount_device_v1';
+function isNoCount() {
+  try { return localStorage.getItem(K_NOCOUNT) === '1'; } catch (err) { return false; }
+}
+function toggleNoCount(checked) {
+  try { if (checked) localStorage.setItem(K_NOCOUNT, '1'); else localStorage.removeItem(K_NOCOUNT); } catch (err) {}
+}
+function initCounterUI() {
+  const t = document.getElementById('nocount-toggle');
+  if (t) t.checked = isNoCount();
+}
+function sendCounterPing() {
+  if (isNoCount()) return;
+  if (navigator.doNotTrack === '1') return;   // เคารพ Do Not Track
+  try {
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';       // ไม่บอกว่ามาจากหน้าไหน
+    img.src = 'https://reflect-app.goatcounter.com/count?p=/app';
+  } catch (err) {}
+}
 function loadExtraNotes() {
   try {
     const raw = localStorage.getItem(K_EXTRA);
@@ -3353,7 +3393,7 @@ function renderInstallStatus() {
 function shareApp() {
   const shareData = {
     title: 'Reflect — ไดอารี่ส่วนตัวที่อยู่ในเครื่องคุณ',
-    text: 'ลองแอปจดบันทึกที่เป็นส่วนตัวจริงๆ ดูสิ ไม่มีเซิร์ฟเวอร์ ไม่มีบัญชี ข้อมูลอยู่ในเครื่องเราเองล้วนๆ',
+    text: 'ลองแอปจดบันทึกที่เป็นส่วนตัวจริงๆ ดูสิ ไม่ต้องมีบัญชี ไดอารี่อยู่ในเครื่องเราเอง ไม่ถูกส่งไปไหน',
     url: 'https://liamsodium.github.io/Reflect-site/'
   };
   if (navigator.share) {
@@ -3434,6 +3474,8 @@ renderDateUI();
 updateHeader();
 registerSW();
 applyReadOnlyUI();
+initCounterUI();
+sendCounterPing();
 if (isReadOnly()) switchTab('history');   // เครื่องอ่านอย่างเดียว ไม่ให้เจอแท็บเขียนตั้งแต่เปิดแอปเลย
 else switchTab('checkin');   // เช้า/ก่อนนอน คือประตูหน้าจริงของแอปตามที่ตั้งใจไว้ แรงเสียดทานต่ำสุด ควรเจอก่อนเสมอ
 
