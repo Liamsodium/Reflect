@@ -268,6 +268,54 @@
     .mb-0 { margin-bottom: 0; }
     .empty { color: var(--dim); font-size: 13px; text-align: center; padding: 34px 10px; line-height: 1.7; }
   </style>
+<style id="report-css">
+.rp { font-family: Sarabun, Thonburi, 'Leelawadee UI', 'Noto Sans Thai', sans-serif; color: #0f172a; background: #fff; font-size: 13.5px; line-height: 1.6; max-width: 780px; margin: 0 auto; padding: 18px 18px 40px; }
+.rp h1 { font-size: 21px; font-weight: 600; margin: 0; }
+.rp h2 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 1.5px solid #cbd5e1; }
+.rp h3 { font-size: 13.5px; font-weight: 600; margin: 0 0 2px; }
+.rp p { margin: 0; }
+.rp b { font-weight: 600; }
+.rp .rp-sub { color: #334155; margin-top: 2px; }
+.rp .rp-meta { color: #334155; margin-top: 6px; font-size: 12.5px; }
+.rp .rp-note { margin-top: 10px; padding: 8px 11px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #475569; font-size: 11.5px; }
+.rp .rp-text { white-space: pre-wrap; word-break: break-word; }
+.rp .rp-muted { color: #64748b; }
+.rp .rp-legend { color: #64748b; font-size: 11px; margin-top: 4px; }
+.rp ul { margin: 0; padding-left: 20px; }
+.rp li { margin: 3px 0; }
+.rp .rp-chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.rp svg { display: block; width: 100%; min-width: 620px; height: auto; }
+.rp table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.rp th, .rp td { border-bottom: 1px solid #e2e8f0; padding: 5px 6px; text-align: left; vertical-align: top; }
+.rp th { background: #f1f5f9; font-weight: 600; color: #334155; font-size: 11.5px; line-height: 1.3; }
+.rp th span { font-weight: 400; color: #64748b; }
+.rp td.n, .rp th.n { text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; width: 52px; }
+.rp td.d { white-space: nowrap; }
+.rp .rp-day { margin: 12px 0; padding-left: 10px; border-left: 2px solid #cbd5e1; break-inside: avoid; }
+.rp .rp-q { color: #64748b; font-size: 11.5px; margin-top: 6px; }
+.rp .rp-foot { margin-top: 24px; padding-top: 6px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 10.5px; }
+.rp .rp-break { margin-top: 30px; padding-top: 6px; border-top: 2px dashed #cbd5e1; }
+@media print {
+  .rp { padding: 0; max-width: none; font-size: 11.5px; }
+  .rp .rp-break { break-before: page; border-top: none; margin-top: 0; padding-top: 0; }
+  .rp tr, .rp li { break-inside: avoid; }
+  .rp h2 { break-after: avoid; }
+  .rp svg { break-inside: avoid; min-width: 0; }
+  .rp .rp-chart { overflow: visible; }
+}
+</style>
+<style>
+#report-view { position: fixed; inset: 0; z-index: 120; background: #fff; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#report-view .rp-toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 10px; background: var(--bg); border-bottom: 1px solid var(--border); }
+#report-view .rp-tip { max-width: 780px; margin: 10px auto 0; padding: 0 18px; color: #64748b; font-size: 11.5px; font-family: Sarabun, sans-serif; }
+@page { size: A4; margin: 14mm 12mm; }
+@media print {
+  body.report-open > *:not(#report-view) { display: none !important; }
+  html.report-open, body.report-open { background: #fff !important; }
+  body.report-open #report-view { position: static !important; overflow: visible !important; }
+  #report-view .rp-toolbar, #report-view .rp-tip { display: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -309,6 +357,76 @@
       <button class="btn-small" onclick="cancelExtraNoteEdit()">ยกเลิก</button>
     </div>
   </div>
+</div>
+
+<!-- สรุปช่วงที่ผ่านมา: หน้าเตรียม -->
+<div id="report-prep-modal" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:110;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(20px, env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));">
+  <div style="max-width:560px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.07em">สรุปช่วงที่ผ่านมา</span>
+      <button class="guide-close" style="position:static;flex-shrink:0" onclick="closeReportPrep()" aria-label="ปิด">✕</button>
+    </div>
+
+    <div class="card">
+      <span class="lbl">ช่วงเวลา</span>
+      <div class="settings-row" style="margin-bottom:10px">
+        <button class="btn-small" onclick="setReportDays(7)">7 วัน</button>
+        <button class="btn-small" onclick="setReportDays(14)">14 วัน</button>
+        <button class="btn-small" onclick="setReportDays(30)">30 วัน</button>
+        <button class="btn-small" onclick="setReportDays(90)">90 วัน</button>
+      </div>
+      <div class="settings-row" style="align-items:center">
+        <input type="date" id="rp-start" class="search-box" style="flex:1;min-width:130px;margin:0" onchange="onReportPrepChange()" />
+        <span style="color:var(--dim)">ถึง</span>
+        <input type="date" id="rp-end" class="search-box" style="flex:1;min-width:130px;margin:0" onchange="onReportPrepChange()" />
+      </div>
+      <p class="settings-note" style="margin-top:8px">มีนัดครั้งก่อน ใส่วันที่นัดเป็นวันเริ่มได้เลย</p>
+      <p class="settings-note" id="rp-summary" style="margin-top:6px;color:var(--accentL)"></p>
+    </div>
+
+    <div class="card">
+      <span class="lbl">ชื่อบนรายงาน (ไม่บังคับ)</span>
+      <input type="text" id="rp-name" class="search-box" style="margin:0" placeholder="เว้นว่างได้" oninput="saveReportDraft()" />
+    </div>
+
+    <div class="card">
+      <span class="lbl">เรื่องที่อยากคุย</span>
+      <textarea id="rp-topics" style="min-height:90px" placeholder="เช่น ช่วงนี้นอนไม่ค่อยหลับ, เรื่องที่บ้าน, สิ่งที่เปลี่ยนไปตั้งแต่ครั้งก่อน" oninput="autoGrow(this);saveReportDraft()"></textarea>
+      <span class="lbl" style="margin-top:14px;display:block">คำถามที่อยากถาม (ไม่บังคับ)</span>
+      <textarea id="rp-questions" style="min-height:70px" placeholder="เช่น เรื่องการรักษา หรือสิ่งที่สังเกตในร่างกาย" oninput="autoGrow(this);saveReportDraft()"></textarea>
+      <p class="settings-note" style="margin-top:8px">เขียนทิ้งไว้ได้ แอปจำไว้ในเครื่องนี้ ไม่ติดไปกับไฟล์ export</p>
+    </div>
+
+    <div class="card">
+      <span class="lbl">แนบข้อความไดอารี่ไหม</span>
+      <label class="settings-row" style="align-items:center;cursor:pointer;margin-bottom:8px"><input type="radio" name="rp-text" value="none" onchange="onReportPrepChange()" style="width:16px;height:16px;flex-shrink:0" /><span style="font-size:13.5px;flex:1;min-width:0">ไม่แนบ — ตัวเลข คำสั้นๆ ตอนก่อนนอน และวันที่ปักหมุด</span></label>
+      <label class="settings-row" style="align-items:center;cursor:pointer;margin-bottom:8px"><input type="radio" name="rp-text" value="pinned" onchange="onReportPrepChange()" style="width:16px;height:16px;flex-shrink:0" /><span style="font-size:13.5px;flex:1;min-width:0">แนบเฉพาะวันที่ปักหมุด 📌</span></label>
+      <label class="settings-row" style="align-items:center;cursor:pointer"><input type="radio" name="rp-text" value="all" onchange="onReportPrepChange()" style="width:16px;height:16px;flex-shrink:0" /><span style="font-size:13.5px;flex:1;min-width:0">แนบทุกวันในช่วงนี้</span></label>
+      <div id="rp-locked-row" class="hidden" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <label class="settings-row" style="align-items:center;cursor:pointer"><input type="checkbox" id="rp-locked-nums" onchange="onReportPrepChange()" style="width:16px;height:16px;flex-shrink:0" /><span style="font-size:13px;color:var(--dim);flex:1;min-width:0">รวมตัวเลขของวันที่ติ๊ก 🔒 ด้วย (ข้อความของวันนั้นไม่ออกไปไม่ว่ากรณีไหน)</span></label>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(99,102,241,0.35)">
+      <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0">ถ้ารู้สึกไม่ไหว หรือมีความคิดทำร้ายตัวเอง ไม่ต้องรอถึงวันนัด โทร <a href="tel:1323" style="color:var(--accentL)">สายด่วนสุขภาพจิต 1323</a> ได้ฟรีตลอด 24 ชั่วโมง หรือ <a href="tel:1669" style="color:var(--accentL)">1669</a> ถ้าเป็นเหตุฉุกเฉิน</p>
+    </div>
+
+    <div class="settings-row" style="margin-top:6px">
+      <button class="btn-primary" style="flex:1" onclick="showReport()">ดูรายงาน →</button>
+    </div>
+  </div>
+</div>
+
+<!-- สรุปช่วงที่ผ่านมา: ตัวรายงาน (พื้นขาว พร้อมพิมพ์) -->
+<div id="report-view" class="hidden">
+  <div class="rp-toolbar">
+    <button class="btn-small" onclick="closeReportView(false)">← แก้</button>
+    <button class="btn-small accent" onclick="printReport()">🖨 พิมพ์ / บันทึก PDF</button>
+    <button class="btn-small" onclick="shareReport()">↗ ส่งเป็นไฟล์</button>
+    <button class="btn-small" onclick="closeReportView(true)">เสร็จ</button>
+  </div>
+  <p class="rp-tip">อ่านทวนก่อนส่งทุกครั้ง · บน iPhone ถ้าปุ่มพิมพ์ไม่ทำงาน ให้กด "ส่งเป็นไฟล์" แล้วเปิดใน Safari เพื่อพิมพ์หรือบันทึกเป็น PDF</p>
+  <div id="report-content" class="rp"></div>
 </div>
 
 <!-- ตรวจ 🔒 ก่อน export แบบแชร์ได้ — โชว์เฉพาะตอนมีรายการใหม่ตั้งแต่ครั้งก่อน -->
@@ -428,6 +546,17 @@
 
     <!-- WRITE -->
     <div id="tab-checkin" class="anim">
+      <div id="lock-notice-card" class="card hidden" style="border-color:rgba(99,102,241,0.45);background:rgba(99,102,241,0.08)">
+        <div style="font-size:13px;line-height:1.7;color:var(--text)">
+          <strong>🔒 ขอโทษครับ ปุ่ม "ส่วนตัว" เคยมีบั๊ก</strong><br>
+          ตั้งแต่ v9.14 ถึง v9.37 พอปิดแล้วเปิดแอปใหม่ เครื่องหมาย 🔒 ของบันทึกประจำวันหายไปเอง "export แบบแชร์ได้" จึงอาจมีวันที่คุณตั้งใจล็อกไว้ติดไปด้วย ถ้าเคยวางไฟล์แบบแชร์ได้ลงแชท AI ไฟล์นั้นอาจมีวันดังกล่าว<br>
+          เวอร์ชันนี้แก้แล้ว แต่เครื่องหมายที่หายไปแล้วกู้คืนไม่ได้ ถ้าเคยล็อกวันไหน ให้เปิดหน้าย้อนหลัง กด ✎ แก้ไข แล้วติ๊ก 🔒 ใหม่
+        </div>
+        <div class="settings-row mt-12">
+          <button class="btn-small accent" onclick="dismissLockNotice(true)">ไปหน้าย้อนหลัง →</button>
+          <button class="btn-small" onclick="dismissLockNotice(false)">รับทราบ</button>
+        </div>
+      </div>
       <div class="mode-switch">
         <button class="mode-btn" id="ci-m" onclick="setCheckinSession('m')">🌅 ตอนเช้า</button>
         <button class="mode-btn" id="ci-n" onclick="setCheckinSession('n')">🌙 ก่อนนอน</button>
@@ -522,10 +651,17 @@
         <textarea id="intention-input" class="short" placeholder="หนึ่งประโยค..."></textarea>
       </div>
 
-      <label class="settings-row" style="align-items:center;margin:2px 4px 14px;cursor:pointer">
+      <label class="settings-row" style="align-items:center;margin:2px 4px 10px;cursor:pointer">
         <input type="checkbox" id="entry-private" style="width:16px;height:16px;flex-shrink:0" />
         <span style="font-size:13px;color:var(--dim)">🔒 ส่วนตัว — ข้ามทั้งวันนี้ตอน "export แบบแชร์ได้"</span>
       </label>
+      <div style="margin:0 4px 14px">
+        <label class="settings-row" style="align-items:center;cursor:pointer">
+          <input type="checkbox" id="entry-pin" onchange="onPinToggle()" style="width:16px;height:16px;flex-shrink:0" />
+          <span style="font-size:13px;color:var(--dim);flex:1;min-width:0">📌 ปักหมุดไว้คุยกับผู้เชี่ยวชาญ — ขึ้นหน้าแรกของ "สรุปช่วงที่ผ่านมา"</span>
+        </label>
+        <textarea id="entry-pin-note" class="hidden" style="min-height:56px;margin-top:8px" placeholder="อยากเล่าเรื่องอะไร (สั้นๆ ไม่บังคับ)"></textarea>
+      </div>
 
       <button class="btn-primary" onclick="handleSubmit()">บันทึก →</button>
     </div>
@@ -635,6 +771,19 @@
         </div>
         <p class="settings-note" style="margin-top:6px">"export แบบแชร์ได้" ตัดบันทึกเสริมและบันทึกประจำวันที่ติ๊ก 🔒 ส่วนตัวออก — ใช้ไฟล์นี้เวลาจะวางลง AI แชท "export ทั้งหมด" ยังใช้เป็น backup หลักเหมือนเดิม</p>
         <p class="settings-note" id="last-export-note"></p>
+      </div>
+
+      <div class="card">
+        <span class="lbl">สรุปช่วงที่ผ่านมา เพื่อไปคุยกับผู้เชี่ยวชาญ</span>
+        <p class="settings-text">รวมตัวเลขและสิ่งที่คุณบันทึกในช่วงที่เลือกเป็นรายงาน 2 หน้า อ่านง่าย พิมพ์หรือบันทึกเป็น PDF ได้ เอาไปให้แพทย์ นักจิตวิทยา หรือคนที่คุณไว้ใจดู ตอนเวลาพบสั้นจะได้ไม่ลืมเรื่องที่อยากเล่า</p>
+        <div class="info-box">
+          • สร้างในเครื่องนี้ ไม่ส่งไปไหนจนกว่าคุณเลือกส่งเอง<br>
+          • ไม่รวมวันที่ติ๊ก 🔒 และไม่แนบข้อความไดอารี่ ถ้าคุณไม่เลือกเอง<br>
+          • ระหว่างวัน ติ๊ก 📌 ในหน้าเขียน สำหรับเรื่องที่อยากเล่า จะขึ้นหน้าแรกของรายงาน
+        </div>
+        <div class="settings-row mt-14">
+          <button class="btn-small accent" onclick="openReportPrep()">📋 สร้างสรุป</button>
+        </div>
       </div>
 
       <div class="card">
@@ -804,8 +953,8 @@ const DRAFT_MAX_AGE_DAYS = 30;
 const K_PREFS   = 'reflect_prefs';
 const EXPORT_VERSION = 4;
 
-const APP_VERSION = '9.37';
-const BUILD_DATE  = '20 ก.ย. 69';
+const APP_VERSION = '9.38';
+const BUILD_DATE  = '21 พ.ย. 69';
 
 // ┌──────────────────────────────────────────────────────────┐
 // │  ใส่ลิงก์ Google Form ของคุณตรงนี้ (แก้ที่เดียวจบ)         │
@@ -1215,14 +1364,18 @@ function generateMD(e) {
   ((e.answers && e.answers[i]) ? e.answers[i] : '—') + '\n'
 ).join('\n') +
 '\n## บันทึกเพิ่มเติม\n' + (e.notes || '—') + '\n' +
-'\n## Intention\n' + (e.intention || '—');
+'\n## Intention\n' + (e.intention || '—') +
+(e.pin ? '\n\n## 📌 อยากคุยกับผู้เชี่ยวชาญ\n' + (e.pinNote || '—') : '');
 }
 
 // ── Storage ──
 // ── ทำให้ entry ทุกอันมีรูปร่างเหมือนกัน (กันข้อมูลรุ่นเก่าทำแอปพัง) ──
 function normalizeEntry(e) {
   if (!e || typeof e !== 'object' || !e.date) return null;
-  const out = {
+  // เริ่มจากสำเนาของเดิมทั้งก้อน แล้วค่อยจัดรูปเฉพาะช่องที่รู้จัก
+  // เดิมสร้าง object ใหม่จากรายชื่อช่องที่จำได้เท่านั้น ช่องที่ไม่อยู่ในรายชื่อเลยหายเงียบๆ ทุกครั้งที่เปิดแอป
+  // (🔒 private, สถานะ intention, คำตอบเช้ารุ่นเก่า หายมาตั้งแต่ v9.14) — ช่องที่จะเพิ่มในอนาคตจะไม่หายแบบนี้อีก
+  const out = Object.assign({}, e, {
     date: String(e.date).slice(0, 10),
     overall: Number(e.overall) || 5,
     energy:  Number(e.energy)  || 3,
@@ -1238,7 +1391,12 @@ function normalizeEntry(e) {
     notes: e.notes == null ? '' : String(e.notes),
     intention: e.intention == null ? '' : String(e.intention),
     quick: !!e.quick,
-  };
+    private: !!e.private,
+    // 📌 ปักหมุดไว้คุยกับผู้เชี่ยวชาญ — ไม่ได้ปักหมุด = ไม่เก็บเหตุผลค้างไว้
+    pin: !!e.pin,
+    pinNote: (e.pin && e.pinNote != null) ? String(e.pinNote) : '',
+  });
+  if (['yes', 'partial', 'no'].indexOf(out.intentionKept) === -1) delete out.intentionKept;
   while (out.answers.length < 3) out.answers.push('');
   if (!out.prompts.length) out.prompts = promptsForDay(out.date);
   return out;
@@ -1282,7 +1440,7 @@ function saveEntries() {
 // (K_EXTRA / K_EXTRA_DRAFT ประกาศทีหลังในไฟล์ แต่ฟังก์ชันนี้ถูกเรียกหลังโหลดเสร็จ จึงอ้างถึงได้)
 function dataChars() {
   try {
-    return [K_ENTRIES, K_DRAFTS, K_DRAFT, K_PREFS, K_EXTRA, K_EXTRA_DRAFT, K_CHECKINS]
+    return [K_ENTRIES, K_DRAFTS, K_DRAFT, K_PREFS, K_EXTRA, K_EXTRA_DRAFT, K_CHECKINS, K_REPORT_DRAFT]
       .reduce(function (sum, k) { return sum + ((localStorage.getItem(k) || '').length); }, 0);
   } catch (err) { return 0; }
 }
@@ -1374,6 +1532,12 @@ function renderSlider(key) {
   html += '</div></div>';
   document.getElementById('slider-' + key).innerHTML = html;
 }
+function onPinToggle() {
+  const on = !!document.getElementById('entry-pin').checked;
+  const t = document.getElementById('entry-pin-note');
+  t.classList.toggle('hidden', !on);
+  if (on) { autoGrow(t); t.focus(); }
+}
 function setSlider(key, val) { sliders[key].val = val; renderSlider(key); }
 function renderAllSliders() { Object.keys(sliders).forEach(renderSlider); }
 
@@ -1454,7 +1618,7 @@ function loadForDate(dateKey) {
   sliders = freshSliders();
   tracker = { sleep:false, exercise:false, social:false };
   answers = ['','',''];
-  let notes = '', intention = '', isPrivate = false;
+  let notes = '', intention = '', isPrivate = false, isPin = false, pinNote = '';
 
   if (saved) {
     sliders.overall.val = saved.overall; sliders.energy.val = saved.energy;
@@ -1463,6 +1627,7 @@ function loadForDate(dateKey) {
     answers = saved.answers.slice(0,3);
     notes = saved.notes; intention = saved.intention;
     isPrivate = !!saved.private;
+    isPin = !!saved.pin; pinNote = saved.pinNote || '';
   } else {
     const d = getDraftFor(dateKey);
     if (d) {
@@ -1474,6 +1639,7 @@ function loadForDate(dateKey) {
       if (d.answers) answers = d.answers.slice(0,3);
       notes = d.notes || ''; intention = d.intention || '';
       isPrivate = !!d.private;
+      isPin = !!d.pin; pinNote = d.pinNote || '';
     }
   }
   while (answers.length < 3) answers.push('');
@@ -1488,6 +1654,10 @@ function loadForDate(dateKey) {
   if (i) { i.value = intention; autoGrow(i); }
   const p = document.getElementById('entry-private');
   if (p) p.checked = isPrivate;
+  const pinBox = document.getElementById('entry-pin');
+  const pinTxt = document.getElementById('entry-pin-note');
+  if (pinBox) pinBox.checked = isPin;
+  if (pinTxt) { pinTxt.value = pinNote; pinTxt.classList.toggle('hidden', !isPin); autoGrow(pinTxt); }
   renderIntentionCheck(dateKey);
 }
 // เช็ก intention ของ "วันก่อนหน้าวันที่กำลังดูอยู่" เสมอ — ไม่ใช่แค่เมื่อวานของวันนี้จริง
@@ -1569,6 +1739,9 @@ function handleSubmit() {
     quick: !!prefs.quickMode,
     private: !!(document.getElementById('entry-private') || {}).checked,
   };
+  const pinOn = !!(document.getElementById('entry-pin') || {}).checked;
+  entry.pin = pinOn;
+  entry.pinNote = pinOn ? ((document.getElementById('entry-pin-note') || {}).value || '').trim() : '';
   // แก้ไขวันเดิมซ้ำ (resubmit): ถ้าข้อความ intention ไม่เปลี่ยน ให้คงสถานะ "ทำได้ไหม" ของเดิมไว้
   // เปลี่ยนข้อความ = สัญญาใหม่ ไม่ควรมีสถานะเก่าติดมาด้วย
   if (prevSaved && prevSaved.intentionKept && prevSaved.intention === entry.intention) {
@@ -2188,7 +2361,7 @@ function closeMonthReview() {
 
 // ── History + search ──
 function entryText(e) {
-  return [(e.answers || []).join(' '), (e.morningAnswers || []).join(' '), e.notes || '', e.intention || '',
+  return [(e.answers || []).join(' '), (e.morningAnswers || []).join(' '), e.notes || '', e.intention || '', e.pinNote || '',
     (e.prompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' '),
     (e.morningPrompts || []).map(function (p) { return p && p.text ? p.text : ''; }).join(' ')].join(' ').toLowerCase();
 }
@@ -2590,6 +2763,7 @@ function renderHistory() {
             '<p class="entry-a">' + (a ? highlight(a, q) : '—') + '</p>';
     });
     let extra = '';
+    if (e.pin) extra += '<div class="entry-section"><p class="entry-section-label">📌 อยากคุยกับผู้เชี่ยวชาญ</p><p class="entry-a">' + (e.pinNote ? highlight(e.pinNote, q) : '—') + '</p></div>';
     if (e.notes) extra += '<div class="entry-section"><p class="entry-section-label">NOTES</p><p class="entry-a">' + highlight(e.notes, q) + '</p></div>';
     if (e.intention) {
       const kb = { yes: ' <span style="color:var(--green)">✓ ทำได้</span>',
@@ -2598,7 +2772,7 @@ function renderHistory() {
       extra += '<div class="entry-section"><p class="entry-section-label">INTENTION' + kb + '</p><p class="entry-a" style="color:var(--accentL)">' + highlight(e.intention, q) + '</p></div>';
     }
     html += '<details' + (q ? ' open' : '') + ' data-date="' + e.date + '">' +
-      '<summary><div><div class="entry-date">' + fmtShort(e.date) + (e.quick ? ' ⚡' : '') + (e.private ? ' 🔒' : '') + '</div>' +
+      '<summary><div><div class="entry-date">' + fmtShort(e.date) + (e.quick ? ' ⚡' : '') + (e.private ? ' 🔒' : '') + (e.pin ? ' 📌' : '') + '</div>' +
       '<div class="entry-scores"><span class="entry-score">⚡' + e.energy + '</span>' +
       '<span class="entry-score">♥' + e.mood + '</span><span class="entry-score">◈' + e.focus + '</span>' +
       '<span style="font-size:11px">' + icons + '</span></div></div>' +
@@ -3065,8 +3239,12 @@ function deleteExtraNote(id) {
   if (activeThemeTag) renderHistory();   // ลบจากหน้าทบทวนรายหมวด การ์ดต้องหายจากจอทันที ไม่ใช่ค้างจนกว่าจะสลับแท็บ
 }
 
+function lockedDateSet() {
+  return new Set(entries.filter(function (e) { return e.private; }).map(function (e) { return e.date; }));
+}
 function buildExportPayload(shareable) {
   const allExtra = loadExtraNotes();
+  const locked = lockedDateSet();
   return {
     app: 'reflect',
     version: EXPORT_VERSION,
@@ -3078,7 +3256,9 @@ function buildExportPayload(shareable) {
     // บันทึกเสริมที่ไม่ผูกกับวัน — ไปด้วยกันตอน export แต่คนละชุดข้อมูล
     // export แบบแชร์ได้ (shareable) จะตัดอันที่ติ๊ก 🔒 ส่วนตัวออก
     extraNotes: shareable ? allExtra.filter(function (n) { return !n.private; }) : allExtra,
-    checkins: loadCheckins()   // เช้า/ก่อนนอน — คนละชุดกับ entries แต่ต้อง backup ไปด้วย
+    // เช้า/ก่อนนอน — คนละชุดกับ entries แต่ต้อง backup ไปด้วย
+    // แบบแชร์ได้: ตัดของวันที่ติ๊ก 🔒 ออกด้วย เพราะป้ายบอกว่า "ข้ามทั้งวันนี้" (เดิมคำที่เขียนตอนก่อนนอนยังหลุดไป)
+    checkins: shareable ? loadCheckins().filter(function (c) { return !locked.has(c.date); }) : loadCheckins()
   };
 }
 function downloadJSON(payload, filename) {
@@ -3328,9 +3508,12 @@ function saveDraft() {
     notes: (document.getElementById('notes-input') || {}).value || '',
     intention: (document.getElementById('intention-input') || {}).value || '',
     private: !!(document.getElementById('entry-private') || {}).checked,
+    pin: !!(document.getElementById('entry-pin') || {}).checked,
+    pinNote: (document.getElementById('entry-pin-note') || {}).value || '',
   };
   // ถ้าไม่มีอะไรเขียนเลย ไม่ต้องสร้างร่างเปล่าทิ้งไว้
-  const hasContent = draft.answers.some(function (a) { return a && a.trim(); }) || draft.notes.trim() || draft.intention.trim();
+  const hasContent = draft.answers.some(function (a) { return a && a.trim(); }) || draft.notes.trim() || draft.intention.trim() ||
+    (draft.pin && draft.pinNote.trim());
   const drafts = loadAllDrafts();
   if (hasContent) {
     drafts[activeDate] = draft;
@@ -3455,7 +3638,411 @@ document.addEventListener('keydown', function (e) {
   if (!document.getElementById('guide-close').classList.contains('hidden')) closeGuide();
 });
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  สรุปช่วงที่ผ่านมา — รายงานสำหรับนำไปคุยกับผู้เชี่ยวชาญ (v9.38)
+//  • สร้างในเครื่องทั้งหมด ไม่ส่งไปไหน ผู้ใช้เลือกเองว่าจะพิมพ์ / ส่งให้ใคร
+//  • แสดงแค่สิ่งที่ผู้ใช้กรอกเอง + การนับ / ค่าเฉลี่ยตรงๆ
+//    ไม่ตีความข้อความ ไม่ให้คะแนนความเสี่ยง ไม่วินิจฉัย (การประเมินเป็นงานของผู้เชี่ยวชาญ)
+//  • วันที่ติ๊ก 🔒 ไม่ถูกรวมเลย เว้นแต่ผู้ใช้เลือกเองให้รวม "เฉพาะตัวเลข"
+// ═══════════════════════════════════════════════════════════════════
+// ตั้งต่อเครื่อง ไม่ติดไปกับไฟล์ export — ไม่งั้นเรื่องที่อยากคุยกับหมอจะไปโผล่ในไฟล์ที่แชร์ให้ AI
+const K_REPORT_DRAFT = 'reflect_report_draft_v1';
+const REPORT_MAX_DAYS = 180;
+// ลำดับแถวในกราฟ = ลำดับที่หมอน่าจะอยากเห็น (ภาพรวมก่อน แล้วค่อยแยกด้าน)
+const REPORT_SERIES = [
+  { key: 'overall', label: 'คะแนนรวม', max: 10, scale: '1–10' },
+  { key: 'mood',    label: 'อารมณ์',    max: 5,  scale: '1 ต่ำ · 5 สูง' },
+  { key: 'energy',  label: 'พลังงาน',   max: 5,  scale: '1 ต่ำ · 5 สูง' },
+  { key: 'sleep',   label: 'การนอน',    max: 5,  scale: '1 แย่มาก · 5 ดีมาก' },
+  { key: 'stress',  label: 'ความเครียด', max: 5, scale: '1 สบายมาก · 5 เครียดมาก' },
+];
+let lastReport = null;   // { inner, title, filename } ของรายงานที่เปิดดูอยู่
+
+function loadReportDraft() {
+  try {
+    const d = JSON.parse(localStorage.getItem(K_REPORT_DRAFT) || '{}');
+    return (d && typeof d === 'object') ? d : {};
+  } catch (err) { return {}; }
+}
+function saveReportDraft() {
+  const d = {
+    start: document.getElementById('rp-start').value,
+    name: document.getElementById('rp-name').value,
+    topics: document.getElementById('rp-topics').value,
+    questions: document.getElementById('rp-questions').value,
+    textMode: reportTextMode(),
+    lockedNums: !!document.getElementById('rp-locked-nums').checked,
+  };
+  try { localStorage.setItem(K_REPORT_DRAFT, JSON.stringify(d)); } catch (err) {}
+}
+function reportTextMode() {
+  const r = document.querySelector('input[name="rp-text"]:checked');
+  return r ? r.value : 'none';
+}
+function isDateKey(v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v); }
+
+function openReportPrep() {
+  const d = loadReportDraft();
+  const today = todayKey();
+  const start = (isDateKey(d.start) && d.start <= today) ? d.start : shiftKey(today, -29);
+  const s = document.getElementById('rp-start'), e = document.getElementById('rp-end');
+  s.max = today; e.max = today;
+  s.value = start; e.value = today;
+  document.getElementById('rp-name').value = d.name || '';
+  document.getElementById('rp-topics').value = d.topics || '';
+  document.getElementById('rp-questions').value = d.questions || '';
+  const mode = ['none', 'pinned', 'all'].indexOf(d.textMode) >= 0 ? d.textMode : 'none';
+  document.querySelectorAll('input[name="rp-text"]').forEach(function (r) { r.checked = r.value === mode; });
+  document.getElementById('rp-locked-nums').checked = !!d.lockedNums;
+  document.getElementById('report-prep-modal').classList.remove('hidden');
+  ['rp-topics', 'rp-questions'].forEach(function (id) { autoGrow(document.getElementById(id)); });
+  updateReportPrepSummary();
+}
+function closeReportPrep() {
+  saveReportDraft();
+  document.getElementById('report-prep-modal').classList.add('hidden');
+}
+function setReportDays(n) {
+  const e = document.getElementById('rp-end');
+  const end = isDateKey(e.value) ? e.value : todayKey();
+  document.getElementById('rp-start').value = shiftKey(end, -(n - 1));
+  onReportPrepChange();
+}
+function onReportPrepChange() { saveReportDraft(); updateReportPrepSummary(); }
+
+// อ่านช่วงวันจากฟอร์ม — สลับให้ถ้าใส่กลับด้าน และจำกัดไม่เกิน REPORT_MAX_DAYS (กราฟจะอ่านไม่ออกถ้ายาวกว่านี้)
+function getReportRange() {
+  const today = todayKey();
+  let start = document.getElementById('rp-start').value;
+  let end = document.getElementById('rp-end').value;
+  if (!isDateKey(end) || end > today) end = today;
+  if (!isDateKey(start)) start = shiftKey(end, -29);
+  if (start > end) { const t = start; start = end; end = t; }
+  let clipped = false;
+  if (daysBetween(start, end) + 1 > REPORT_MAX_DAYS) { start = shiftKey(end, -(REPORT_MAX_DAYS - 1)); clipped = true; }
+  return { start: start, end: end, days: daysBetween(start, end) + 1, clipped: clipped };
+}
+
+function updateReportPrepSummary() {
+  const r = getReportRange();
+  const locked = lockedDateSet();
+  const inR = entries.filter(function (e) { return e.date >= r.start && e.date <= r.end; });
+  const nLocked = inR.filter(function (e) { return locked.has(e.date); }).length;
+  const nPin = inR.filter(function (e) { return e.pin && !locked.has(e.date); }).length;
+  const lockedNums = document.getElementById('rp-locked-nums').checked;
+  const nCi = loadCheckins().filter(function (c) {
+    return c.date >= r.start && c.date <= r.end && (lockedNums || !locked.has(c.date));
+  }).length;
+  let t = fmtShort(r.start) + ' – ' + fmtShort(r.end) + ' (' + r.days + ' วัน) · บันทึกประจำวัน ' + (inR.length - nLocked) + ' วัน · เช้า/ก่อนนอน ' + nCi + ' ครั้ง';
+  if (nPin) t += ' · 📌 ' + nPin + ' วัน';
+  if (nLocked) t += ' · 🔒 ' + nLocked + ' วัน' + (lockedNums ? ' (รวมเฉพาะตัวเลข)' : ' (ไม่รวม)');
+  if (r.clipped) t += ' · ยาวสุด ' + REPORT_MAX_DAYS + ' วัน จึงตัดช่วงต้นออก';
+  document.getElementById('rp-summary').textContent = t;
+  document.getElementById('rp-locked-row').classList.toggle('hidden', !nLocked);
+}
+
+// ── รวบรวมข้อมูลของช่วงที่เลือก ──
+function collectReportData(o) {
+  const locked = lockedDateSet();
+  const inRange = function (d) { return d >= o.start && d <= o.end; };
+  const byDate = {};
+  const day = function (d) { return byDate[d] || (byDate[d] = { date: d, locked: locked.has(d) }); };
+  entries.forEach(function (e) {
+    if (!inRange(e.date)) return;
+    if (locked.has(e.date) && !o.lockedNums) return;
+    day(e.date).entry = e;
+  });
+  loadCheckins().forEach(function (c) {
+    if (!inRange(c.date)) return;
+    if (locked.has(c.date) && !o.lockedNums) return;
+    if (c.session === 'm') day(c.date).m = c;
+    else if (c.session === 'n') day(c.date).n = c;
+  });
+  const days = [];
+  for (let i = 0; i < o.days; i++) {
+    const d = shiftKey(o.start, i);
+    const rec = byDate[d] || { date: d, locked: locked.has(d) };
+    rec.vals = {
+      overall: rec.entry ? rec.entry.overall : null,
+      mood:    rec.entry ? rec.entry.mood : null,
+      energy:  rec.entry ? rec.entry.energy : null,
+      sleep:   rec.m && rec.m.sleep ? rec.m.sleep : null,
+      stress:  rec.n && rec.n.stress ? rec.n.stress : null,
+    };
+    rec.hasData = !!(rec.entry || rec.m || rec.n);
+    // ข้อความใดๆ ของวันที่ล็อก ไม่ออกไปในรายงานเด็ดขาด แม้เลือกให้รวมตัวเลข
+    rec.textOK = !rec.locked;
+    days.push(rec);
+  }
+  return days;
+}
+function avgVals(list) {
+  const v = list.filter(function (x) { return x != null; });
+  return v.length ? { avg: v.reduce(function (a, b) { return a + b; }, 0) / v.length, n: v.length } : { avg: null, n: 0 };
+}
+function fmt1(x) { return x == null ? '–' : (Math.round(x * 10) / 10).toFixed(1); }
+
+// ── กราฟ: แถวละหนึ่งค่า (small multiples) แกนวันเดียวกัน — พิมพ์ขาวดำก็ยังอ่านออก ──
+function reportChartSVG(days) {
+  const n = days.length;
+  const W = 720, LW = 150, RW = 62, PW = W - LW - RW, RH = 46, GAP = 14, TOP = 16;
+  const H = TOP + REPORT_SERIES.length * (RH + GAP) + 18;
+  const x = function (i) { return LW + (n === 1 ? PW / 2 : i * PW / (n - 1)); };
+  let g = '';
+  // วันที่ปักหมุด: เส้นประแนวตั้งพาดทุกแถว + ◆ ด้านบน
+  days.forEach(function (d, i) {
+    if (d.entry && d.entry.pin && d.textOK) {
+      g += '<line x1="' + x(i) + '" y1="' + (TOP - 4) + '" x2="' + x(i) + '" y2="' + (H - 18) + '" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="3 3"/>' +
+           '<path d="M' + x(i) + ' ' + (TOP - 12) + ' l4 4 l-4 4 l-4 -4 z" fill="#334155"/>';
+    }
+  });
+  REPORT_SERIES.forEach(function (s, r) {
+    const y0 = TOP + r * (RH + GAP);
+    const y = function (v) { return y0 + RH - (v - 1) / (s.max - 1) * RH; };
+    const vals = days.map(function (d) { return d.vals[s.key]; });
+    const a = avgVals(vals);
+    g += '<rect x="' + LW + '" y="' + y0 + '" width="' + PW + '" height="' + RH + '" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>';
+    g += '<line x1="' + LW + '" y1="' + y((1 + s.max) / 2) + '" x2="' + (LW + PW) + '" y2="' + y((1 + s.max) / 2) + '" stroke="#e2e8f0" stroke-width="0.8"/>';
+    g += '<text x="' + (LW - 8) + '" y="' + (y0 + 18) + '" text-anchor="end" font-size="13" font-weight="600" fill="#0f172a">' + esc(s.label) + '</text>' +
+         '<text x="' + (LW - 8) + '" y="' + (y0 + 34) + '" text-anchor="end" font-size="10" fill="#64748b">' + esc(s.scale) + '</text>';
+    g += '<text x="' + (LW + 3) + '" y="' + (y0 + 9) + '" font-size="8" fill="#94a3b8">' + s.max + '</text>' +
+         '<text x="' + (LW + 3) + '" y="' + (y0 + RH - 2) + '" font-size="8" fill="#94a3b8">1</text>';
+    // เส้นต่อกันเฉพาะวันที่ติดกัน — วันที่ไม่ได้บันทึกให้ขาดช่วง ไม่ลากเส้นเดาข้าม
+    let seg = [];
+    const flush = function () {
+      if (seg.length > 1) g += '<polyline points="' + seg.join(' ') + '" fill="none" stroke="#334155" stroke-width="1.6" stroke-linejoin="round"/>';
+      seg = [];
+    };
+    vals.forEach(function (v, i) {
+      if (v == null) { flush(); return; }
+      seg.push(x(i).toFixed(1) + ',' + y(v).toFixed(1));
+    });
+    flush();
+    vals.forEach(function (v, i) {
+      if (v != null) g += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="2.4" fill="#334155"/>';
+    });
+    g += a.n
+      ? '<text x="' + (LW + PW + 8) + '" y="' + (y0 + 18) + '" font-size="10" fill="#64748b">เฉลี่ย</text>' +
+        '<text x="' + (LW + PW + 8) + '" y="' + (y0 + 34) + '" font-size="14" font-weight="600" fill="#0f172a">' + fmt1(a.avg) + '</text>'
+      : '<text x="' + (LW + PW / 2) + '" y="' + (y0 + RH / 2 + 4) + '" text-anchor="middle" font-size="11" fill="#94a3b8">ไม่มีบันทึกในช่วงนี้</text>';
+  });
+  // ป้ายวันที่ใต้กราฟ — ไม่เกิน ~8 ป้าย ไม่งั้นทับกัน
+  const step = Math.max(1, Math.ceil(n / 8));
+  const yL = H - 4;
+  for (let i = n - 1; i >= 0; i -= step) {
+    g += '<text x="' + x(i) + '" y="' + yL + '" text-anchor="middle" font-size="10" fill="#64748b">' + fmtShort(days[i].date) + '</text>';
+  }
+  return '<div class="rp-chart"><svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="กราฟคะแนนรายวัน" font-family="Sarabun, Thonburi, \'Leelawadee UI\', \'Noto Sans Thai\', sans-serif">' + g + '</svg></div>';
+}
+
+// ── ข้อสังเกตจากตัวเลข: นับและเฉลี่ยตรงๆ เท่านั้น ไม่มีคำตัดสิน ──
+function reportObservations(days, o) {
+  const out = [];
+  const withEntry = days.filter(function (d) { return d.entry; });
+  const mDays = days.filter(function (d) { return d.vals.sleep != null; });
+  const nDays = days.filter(function (d) { return d.vals.stress != null; });
+
+  const moodA = avgVals(withEntry.map(function (d) { return d.entry.mood; }));
+  if (moodA.n) {
+    // เทียบกับช่วงก่อนหน้าที่ยาวเท่ากัน — โชว์ทั้งสองตัวเลข ให้ผู้อ่านตีความเอง
+    const pEnd = shiftKey(o.start, -1), pStart = shiftKey(o.start, -o.days);
+    const locked = lockedDateSet();
+    const prev = entries.filter(function (e) {
+      return e.date >= pStart && e.date <= pEnd && (!locked.has(e.date) || o.lockedNums);
+    });
+    const pa = avgVals(prev.map(function (e) { return e.mood; }));
+    out.push('อารมณ์เฉลี่ย <b>' + fmt1(moodA.avg) + '</b> จาก 5 (' + moodA.n + ' วัน)' +
+      (pa.n >= 3 ? ' · ช่วงก่อนหน้าเท่ากัน (' + fmtShort(pStart) + ' – ' + fmtShort(pEnd) + ') เฉลี่ย ' + fmt1(pa.avg) + ' จาก ' + pa.n + ' วัน'
+                 : ' · ช่วงก่อนหน้ามีบันทึกน้อยเกินกว่าจะเทียบ'));
+  }
+  if (withEntry.length >= 4) {
+    const low = withEntry.slice().sort(function (a, b) {
+      return (a.entry.mood - b.entry.mood) || (a.entry.overall - b.entry.overall) || (a.date < b.date ? -1 : 1);
+    }).slice(0, 3);
+    out.push('วันที่อารมณ์ต่ำที่สุด 3 วัน: ' + low.map(function (d) {
+      return '<b>' + fmtShort(d.date) + '</b> (อารมณ์ ' + d.entry.mood + '/5 · รวม ' + d.entry.overall + '/10)';
+    }).join(', '));
+  }
+  if (nDays.length) {
+    const hi = nDays.filter(function (d) { return d.vals.stress >= 4; }).length;
+    out.push('ตอบว่า "ค่อนข้างเครียด" หรือ "เครียดมาก" <b>' + hi + '</b> จาก ' + nDays.length + ' คืนที่บันทึกก่อนนอน');
+  }
+  if (mDays.length) {
+    const lo = mDays.filter(function (d) { return d.vals.sleep <= 2; }).length;
+    out.push('ตอบว่านอน "ไม่ค่อยดี" หรือ "แย่มาก" <b>' + lo + '</b> จาก ' + mDays.length + ' เช้าที่บันทึก');
+  }
+  if (withEntry.length) {
+    const c = function (k) { return withEntry.filter(function (d) { return d.entry.tracker && d.entry.tracker[k]; }).length; };
+    out.push('จาก ' + withEntry.length + ' วันที่บันทึกประจำวัน: ติ๊กนอนพอ <b>' + c('sleep') + '</b> วัน · ออกกำลังกาย <b>' + c('exercise') + '</b> วัน · ได้เจอคน <b>' + c('social') + '</b> วัน');
+  }
+  return out;
+}
+
+function reportDayText(d) {
+  let h = '';
+  const e = d.entry;
+  if (e) {
+    (e.prompts || []).forEach(function (p, i) {
+      const a = e.answers && e.answers[i] ? String(e.answers[i]).trim() : '';
+      if (!a) return;
+      h += '<p class="rp-q">' + esc(p && p.text ? p.text : '') + '</p><p class="rp-text">' + esc(a) + '</p>';
+    });
+    if (e.notes && e.notes.trim()) h += '<p class="rp-q">บันทึกเพิ่มเติม</p><p class="rp-text">' + esc(e.notes.trim()) + '</p>';
+  }
+  if (d.n && d.n.summary && String(d.n.summary).trim()) h += '<p class="rp-q">สรุปวันก่อนนอน</p><p class="rp-text">' + esc(String(d.n.summary).trim()) + '</p>';
+  return h;
+}
+
+function buildReport(o) {
+  const days = collectReportData(o);
+  const nEntry = days.filter(function (d) { return d.entry; }).length;
+  const nM = days.filter(function (d) { return d.m; }).length;
+  const nN = days.filter(function (d) { return d.n; }).length;
+  const nLocked = days.filter(function (d) { return d.locked; }).length;
+  const pinned = days.filter(function (d) { return d.entry && d.entry.pin && d.textOK; });
+  const sc = CHECKIN_SCALES;
+  let h = '';
+
+  // ── หน้า 1 ──
+  h += '<div class="rp-page">';
+  h += '<h1>สรุปบันทึกของตัวเอง</h1>';
+  h += '<p class="rp-sub">' + (o.name ? esc(o.name) + ' · ' : '') + fmtFull(o.start) + ' – ' + fmtFull(o.end) + ' (' + o.days + ' วัน)</p>';
+  h += '<p class="rp-meta">บันทึกประจำวัน <b>' + nEntry + '</b> จาก ' + o.days + ' วัน · บันทึกตอนเช้า ' + nM + ' วัน · ก่อนนอน ' + nN + ' วัน' +
+    (nLocked ? ' · วันที่ผู้ใช้ล็อกเป็นส่วนตัว ' + nLocked + ' วัน ' + (o.lockedNums ? '(รวมเฉพาะตัวเลข ไม่มีข้อความ)' : '(ไม่รวมในรายงาน)') : '') + '</p>';
+  h += '<p class="rp-note">ข้อมูลทั้งหมดผู้ใช้กรอกเองในแอป Reflect (แอปบันทึกประจำวัน) ตัวเลขเป็นระดับที่ผู้ใช้เลือกเอง ' +
+    'แอปไม่ได้วิเคราะห์ ประเมิน หรือวินิจฉัย ส่วน "ข้อสังเกต" เป็นการนับและหาค่าเฉลี่ยเท่านั้น</p>';
+  if (o.topics.trim()) h += '<h2>เรื่องที่อยากคุย</h2><p class="rp-text">' + esc(o.topics.trim()) + '</p>';
+  if (o.questions.trim()) h += '<h2>คำถามที่อยากถาม</h2><p class="rp-text">' + esc(o.questions.trim()) + '</p>';
+  if (pinned.length) {
+    h += '<h2>◆ วันที่ปักหมุดไว้ว่าอยากเล่า</h2><ul>' + pinned.map(function (d) {
+      return '<li><b>' + fmtShort(d.date) + '</b> — ' + (d.entry.pinNote ? '<span class="rp-text">' + esc(d.entry.pinNote) + '</span>' : '<span class="rp-muted">ไม่ได้เขียนรายละเอียด</span>') + '</li>';
+    }).join('') + '</ul>';
+  }
+  h += '<h2>ภาพรวมช่วงนี้</h2>';
+  h += (nEntry + nM + nN) ? reportChartSVG(days) : '<p class="rp-muted">ยังไม่มีบันทึกในช่วงนี้</p>';
+  h += '<p class="rp-legend">จุด = วันที่บันทึก · เส้นขาด = วันที่ไม่ได้บันทึก' + (pinned.length ? ' · ◆ และเส้นประ = วันที่ปักหมุด' : '') + '</p>';
+  const obs = reportObservations(days, o);
+  if (obs.length) h += '<h2>ข้อสังเกตจากตัวเลข</h2><ul>' + obs.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>';
+  h += '</div>';
+
+  // ── หน้า 2: รายวัน ──
+  const rows = days.filter(function (d) { return d.hasData; });
+  h += '<div class="rp-page rp-break">';
+  h += '<h2>รายวัน</h2>';
+  if (rows.length) {
+    h += '<table><thead><tr><th>วันที่</th><th class="n">รวม<br><span>/10</span></th><th class="n">อารมณ์<br><span>/5</span></th><th class="n">พลังงาน<br><span>/5</span></th>' +
+      '<th class="n">นอน<br><span>/5</span></th><th class="n">เครียด<br><span>/5</span></th><th>คำที่เขียนเองตอนก่อนนอน</th></tr></thead><tbody>';
+    rows.forEach(function (d) {
+      const v = d.vals;
+      const cell = function (x) { return '<td class="n">' + (x == null ? '<span class="rp-muted">–</span>' : x) + '</td>'; };
+      const feel = d.textOK && d.n && d.n.feeling ? esc(d.n.feeling) : (d.locked ? '<span class="rp-muted">🔒 ส่วนตัว</span>' : '');
+      h += '<tr><td class="d">' + fmtShort(d.date) + (d.entry && d.entry.pin && d.textOK ? ' ◆' : '') + '</td>' +
+        cell(v.overall) + cell(v.mood) + cell(v.energy) + cell(v.sleep) + cell(v.stress) + '<td>' + feel + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    const empty = o.days - rows.length;
+    h += '<p class="rp-legend">ไม่มีบันทึก ' + empty + ' วัน (ไม่แสดงในตาราง)' +
+      ' · นอน: ' + sc.sleep.labels.map(function (l, i) { return (i + 1) + ' ' + l; }).join(', ') +
+      ' · เครียด: ' + sc.stress.labels.map(function (l, i) { return (i + 1) + ' ' + l; }).join(', ') + '</p>';
+  } else {
+    h += '<p class="rp-muted">ยังไม่มีบันทึกในช่วงนี้</p>';
+  }
+
+  // ── ข้อความที่ผู้ใช้เลือกแนบเอง ──
+  if (o.textMode !== 'none') {
+    const pick = days.filter(function (d) {
+      if (!d.textOK || !d.hasData) return false;
+      return o.textMode === 'all' || (d.entry && d.entry.pin);
+    });
+    const blocks = pick.map(function (d) {
+      const t = reportDayText(d);
+      return t ? '<div class="rp-day"><h3>' + fmtFull(d.date) + (d.entry && d.entry.pin ? ' ◆' : '') + '</h3>' + t + '</div>' : '';
+    }).filter(Boolean);
+    h += '<h2>ข้อความที่เลือกแนบ (' + (o.textMode === 'all' ? 'ทุกวันในช่วงนี้' : 'เฉพาะวันที่ปักหมุด') + ')</h2>';
+    h += blocks.length ? blocks.join('') : '<p class="rp-muted">ไม่มีข้อความในวันที่เลือก</p>';
+  }
+  h += '<p class="rp-foot">สร้างด้วย Reflect v' + APP_VERSION + ' เมื่อ ' + fmtFull(todayKey()) +
+    ' · สร้างในเครื่องของผู้ใช้ ไม่ได้ส่งผ่านเซิร์ฟเวอร์ใด</p>';
+  h += '</div>';
+  return h;
+}
+
+function reportOptsFromForm() {
+  const r = getReportRange();
+  return {
+    start: r.start, end: r.end, days: r.days,
+    name: document.getElementById('rp-name').value.trim(),
+    topics: document.getElementById('rp-topics').value,
+    questions: document.getElementById('rp-questions').value,
+    textMode: reportTextMode(),
+    lockedNums: !!document.getElementById('rp-locked-nums').checked,
+  };
+}
+function showReport() {
+  saveReportDraft();
+  const o = reportOptsFromForm();
+  const inner = buildReport(o);
+  lastReport = {
+    inner: inner,
+    title: 'สรุปบันทึก ' + fmtShort(o.start) + ' – ' + fmtShort(o.end),
+    filename: 'reflect-summary-' + o.start + '_' + o.end + '.html',
+  };
+  document.getElementById('report-content').innerHTML = inner;
+  document.getElementById('report-view').classList.remove('hidden');
+  document.body.classList.add('report-open');
+  document.documentElement.classList.add('report-open');
+  document.getElementById('report-view').scrollTop = 0;
+}
+function closeReportView(alsoPrep) {
+  document.getElementById('report-view').classList.add('hidden');
+  document.body.classList.remove('report-open');
+  document.documentElement.classList.remove('report-open');
+  if (alsoPrep) closeReportPrep();
+}
+function printReport() { window.print(); }
+function reportStandaloneHTML() {
+  // ไฟล์ที่ส่งต่อ: ไม่โหลดฟอนต์จาก Google (เปิดไฟล์แล้วจะได้ไม่ต่อเน็ตไปไหน) ใช้ฟอนต์ไทยในเครื่องแทน
+  return '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>' + esc(lastReport.title) + '</title><style>' + document.getElementById('report-css').textContent +
+    'body{margin:0;background:#fff}</style></head><body><div class="rp">' + lastReport.inner + '</div></body></html>';
+}
+function shareReport() {
+  if (!lastReport) return;
+  const html = reportStandaloneHTML();
+  try {
+    const file = new File([html], lastReport.filename, { type: 'text/html' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: lastReport.title }).catch(function () {});
+      return;
+    }
+  } catch (err) {}
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = lastReport.filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+}
+
+// ── แจ้งผู้ใช้เรื่องบั๊ก 🔒 (v9.14–v9.37) — โชว์ครั้งเดียว ──
+function renderLockNotice() {
+  const card = document.getElementById('lock-notice-card');
+  if (!card) return;
+  card.classList.toggle('hidden', !!prefs.lockBugNoticeSeen || entries.length === 0);
+}
+function dismissLockNotice(goHistory) {
+  prefs.lockBugNoticeSeen = true; savePrefs();
+  renderLockNotice();
+  if (goHistory) switchTab('history');
+}
+
 loadAll();
+// ผู้ใช้ใหม่ที่ยังไม่มีบันทึกเลย ไม่เคยโดนบั๊ก 🔒 — ไม่ต้องเห็นประกาศนี้ในอนาคต
+if (!entries.length && !prefs.lockBugNoticeSeen) { prefs.lockBugNoticeSeen = true; savePrefs(); }
 document.getElementById('version-line').textContent = 'v' + APP_VERSION + ' · daily journal';
 migrateOldDraft();
 pruneOldDrafts();
@@ -3471,6 +4058,7 @@ checkinSession = autoCheckinSession();   // เปิดมาให้ตรง
 })();
 wireGrow(document.getElementById('notes-input'));
 wireGrow(document.getElementById('intention-input'));
+wireGrow(document.getElementById('entry-pin-note'));
 // หมายเหตุ: extra-note-text ไม่ใช้ autoGrow แล้ว — ในจอเต็มมันยืดเต็มพื้นที่ด้วย flex และเลื่อนในตัวเอง
 document.getElementById('extra-note-text').addEventListener('input', scheduleExtraNoteDraftSave);
 document.getElementById('extra-note-label').addEventListener('input', scheduleExtraNoteDraftSave);
@@ -3482,6 +4070,7 @@ renderDateUI();
 updateHeader();
 registerSW();
 applyReadOnlyUI();
+renderLockNotice();
 initCounterUI();
 sendCounterPing();
 if (isReadOnly()) switchTab('history');   // เครื่องอ่านอย่างเดียว ไม่ให้เจอแท็บเขียนตั้งแต่เปิดแอปเลย
